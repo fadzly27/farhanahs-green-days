@@ -1,0 +1,145 @@
+/* Farhanah's Green Days — built-in food list
+ *
+ * Approximate energy (kcal) and protein (g) per STANDARD SERVING.
+ * Compiled from Malaysian food composition data (MyFCD, Ministry of Health
+ * Malaysia) and published Malaysian / Singapore hawker-food calorie lists
+ * (e.g. MOH Malaysia calorie guides, Health Promotion Board Singapore).
+ * Shop portions and recipes vary a lot, so treat these as estimates.
+ *
+ * Easy to correct: edit a number below, then bump CACHE in sw.js.
+ *
+ * Fields: id (never change once used), name, serving, kcal, protein,
+ *         sd = isSugaryDrink, sf = isSweetFood, alt = extra search words
+ */
+window.FGD_FOODS = [
+  // ---- Rice dishes ----
+  { id: 'nasi-lemak', name: 'Nasi lemak (biasa)', serving: '1 plate', kcal: 389, protein: 10, alt: 'coconut rice sambal ikan bilis' },
+  { id: 'nasi-lemak-ayam', name: 'Nasi lemak ayam goreng', serving: '1 plate', kcal: 750, protein: 30, alt: 'fried chicken' },
+  { id: 'nasi-lemak-rendang', name: 'Nasi lemak rendang', serving: '1 plate', kcal: 640, protein: 24 },
+  { id: 'nasi-goreng-kampung', name: 'Nasi goreng kampung', serving: '1 plate', kcal: 610, protein: 16, alt: 'fried rice' },
+  { id: 'nasi-goreng-pattaya', name: 'Nasi goreng pattaya', serving: '1 plate', kcal: 700, protein: 22, alt: 'fried rice egg' },
+  { id: 'nasi-ayam', name: 'Nasi ayam (roasted)', serving: '1 plate', kcal: 607, protein: 25, alt: 'chicken rice' },
+  { id: 'nasi-campur', name: 'Nasi campur (1 meat, 2 veg)', serving: '1 plate', kcal: 650, protein: 28, alt: 'mixed rice economy' },
+  { id: 'nasi-kandar', name: 'Nasi kandar', serving: '1 plate', kcal: 800, protein: 30, alt: 'mamak curry' },
+  { id: 'nasi-briyani', name: 'Nasi briyani ayam', serving: '1 plate', kcal: 750, protein: 30, alt: 'biryani' },
+  { id: 'nasi-kerabu', name: 'Nasi kerabu', serving: '1 plate', kcal: 550, protein: 20 },
+  { id: 'nasi-dagang', name: 'Nasi dagang', serving: '1 plate', kcal: 600, protein: 18 },
+  { id: 'nasi-putih', name: 'White rice', serving: '1 cup cooked (≈150 g)', kcal: 195, protein: 4, alt: 'nasi putih plain' },
+  { id: 'nasi-perang', name: 'Brown rice', serving: '1 cup cooked (≈150 g)', kcal: 185, protein: 4, alt: 'nasi perang' },
+  { id: 'bubur-ayam', name: 'Bubur ayam', serving: '1 bowl', kcal: 250, protein: 12, alt: 'chicken porridge congee' },
+
+  // ---- Noodles ----
+  { id: 'mee-goreng-mamak', name: 'Mee goreng mamak', serving: '1 plate', kcal: 660, protein: 18, alt: 'fried noodles' },
+  { id: 'char-kuey-teow', name: 'Char kuey teow', serving: '1 plate', kcal: 744, protein: 23, alt: 'fried flat noodles ckt' },
+  { id: 'maggi-goreng', name: 'Maggi goreng', serving: '1 plate', kcal: 560, protein: 14, alt: 'instant noodles fried' },
+  { id: 'mihun-goreng', name: 'Mihun goreng', serving: '1 plate', kcal: 520, protein: 13, alt: 'bihun fried vermicelli' },
+  { id: 'asam-laksa', name: 'Asam laksa', serving: '1 bowl', kcal: 436, protein: 18, alt: 'penang laksa' },
+  { id: 'curry-laksa', name: 'Curry laksa', serving: '1 bowl', kcal: 590, protein: 22, alt: 'laksa kari' },
+  { id: 'mee-rebus', name: 'Mee rebus', serving: '1 bowl', kcal: 556, protein: 20 },
+  { id: 'mee-soto', name: 'Mee soto', serving: '1 bowl', kcal: 450, protein: 20, alt: 'soto ayam' },
+  { id: 'mee-bandung', name: 'Mee bandung', serving: '1 bowl', kcal: 500, protein: 22 },
+  { id: 'wantan-mee', name: 'Wantan mee (dry)', serving: '1 plate', kcal: 409, protein: 17, alt: 'wonton noodles' },
+  { id: 'kuey-teow-sup', name: 'Kuey teow soup', serving: '1 bowl', kcal: 350, protein: 18, alt: 'noodle soup' },
+  { id: 'pan-mee', name: 'Pan mee (soup)', serving: '1 bowl', kcal: 475, protein: 20 },
+  { id: 'maggi-kari', name: 'Instant noodles (curry)', serving: '1 packet', kcal: 380, protein: 8, alt: 'maggi kari mee segera' },
+
+  // ---- Mamak & breads ----
+  { id: 'roti-canai', name: 'Roti canai', serving: '1 piece', kcal: 301, protein: 6, alt: 'roti kosong paratha' },
+  { id: 'roti-telur', name: 'Roti telur', serving: '1 piece', kcal: 400, protein: 11, alt: 'egg' },
+  { id: 'roti-tisu', name: 'Roti tisu', serving: '1 piece', kcal: 450, protein: 6, sf: true, alt: 'tissue sugar' },
+  { id: 'thosai', name: 'Thosai', serving: '1 piece', kcal: 175, protein: 4, alt: 'dosa' },
+  { id: 'capati', name: 'Capati', serving: '1 piece', kcal: 200, protein: 6, alt: 'chapati' },
+  { id: 'naan', name: 'Naan (plain)', serving: '1 piece', kcal: 300, protein: 9 },
+  { id: 'ayam-tandoori', name: 'Ayam tandoori', serving: '1 piece', kcal: 260, protein: 30, alt: 'tandoori chicken' },
+  { id: 'murtabak', name: 'Murtabak ayam', serving: '½ piece (1 serving)', kcal: 600, protein: 25 },
+  { id: 'roti-jala', name: 'Roti jala with curry', serving: '3 pieces', kcal: 350, protein: 10 },
+  { id: 'roti-bakar', name: 'Roti bakar kaya butter', serving: '2 slices', kcal: 330, protein: 6, sf: true, alt: 'toast kaya' },
+  { id: 'telur-separuh-masak', name: 'Half-boiled eggs', serving: '2 eggs', kcal: 140, protein: 12, alt: 'telur separuh masak' },
+  { id: 'roti-wholemeal', name: 'Wholemeal bread', serving: '2 slices', kcal: 160, protein: 7, alt: 'roti gandum' },
+  { id: 'sandwich-telur', name: 'Egg sandwich', serving: '1 sandwich', kcal: 300, protein: 12, alt: 'sandwic telur' },
+  { id: 'burger-ayam', name: 'Chicken burger (stall)', serving: '1 burger', kcal: 400, protein: 18, alt: 'burger' },
+  { id: 'oat', name: 'Oatmeal (plain)', serving: '1 bowl (40 g oats)', kcal: 150, protein: 5, alt: 'oats' },
+
+  // ---- Home-cooked & sides ----
+  { id: 'ayam-goreng', name: 'Ayam goreng', serving: '1 piece', kcal: 300, protein: 22, alt: 'fried chicken' },
+  { id: 'ayam-masak-merah', name: 'Ayam masak merah', serving: '1 piece + gravy', kcal: 280, protein: 20 },
+  { id: 'kari-ayam', name: 'Kari ayam', serving: '1 piece + gravy', kcal: 280, protein: 18, alt: 'chicken curry' },
+  { id: 'rendang-daging', name: 'Rendang daging', serving: '1 serving (2 pieces)', kcal: 250, protein: 18, alt: 'beef' },
+  { id: 'ayam-panggang', name: 'Grilled chicken breast', serving: '1 palm (≈100 g)', kcal: 165, protein: 31, alt: 'ayam panggang dada' },
+  { id: 'ikan-goreng', name: 'Ikan kembung goreng', serving: '1 fish', kcal: 220, protein: 22, alt: 'fried fish mackerel' },
+  { id: 'ikan-bakar', name: 'Ikan bakar', serving: '1 piece', kcal: 200, protein: 25, alt: 'grilled fish' },
+  { id: 'telur-rebus', name: 'Boiled egg', serving: '1 egg', kcal: 75, protein: 6, alt: 'telur rebus' },
+  { id: 'telur-goreng', name: 'Fried egg', serving: '1 egg', kcal: 110, protein: 6, alt: 'telur mata' },
+  { id: 'telur-dadar', name: 'Omelette (telur dadar)', serving: '1 egg', kcal: 150, protein: 7 },
+  { id: 'tauhu-goreng', name: 'Tauhu goreng', serving: '1 piece', kcal: 140, protein: 8, alt: 'fried tofu' },
+  { id: 'tempe-goreng', name: 'Tempe goreng', serving: '1 piece', kcal: 160, protein: 9, alt: 'tempeh' },
+  { id: 'sayur-campur', name: 'Stir-fried mixed veg', serving: '1 serving (½ cup)', kcal: 70, protein: 2, alt: 'sayur campur vegetables' },
+  { id: 'kangkung-belacan', name: 'Kangkung belacan', serving: '1 serving (½ cup)', kcal: 90, protein: 3, alt: 'vegetables' },
+  { id: 'sup-ayam', name: 'Sup ayam', serving: '1 bowl', kcal: 180, protein: 15, alt: 'chicken soup' },
+  { id: 'sambal', name: 'Sambal', serving: '1 tbsp', kcal: 60, protein: 1, alt: 'chilli' },
+  { id: 'satay-ayam', name: 'Satay ayam + kuah', serving: '5 sticks', kcal: 300, protein: 22, alt: 'sate' },
+  { id: 'yong-tau-foo', name: 'Yong tau foo (soup)', serving: '6 pieces', kcal: 380, protein: 25 },
+  { id: 'siew-mai', name: 'Siew mai', serving: '3 pieces', kcal: 180, protein: 10, alt: 'dim sum' },
+  { id: 'popiah', name: 'Popiah (fresh)', serving: '1 roll', kcal: 190, protein: 6 },
+  { id: 'rojak-buah', name: 'Rojak buah', serving: '1 plate', kcal: 280, protein: 4, alt: 'fruit rojak' },
+  { id: 'pau-ayam', name: 'Pau ayam', serving: '1 piece', kcal: 220, protein: 9, alt: 'bun chicken' },
+  { id: 'keropok-lekor', name: 'Keropok lekor', serving: '5 pieces', kcal: 250, protein: 9 },
+
+  // ---- Kuih & desserts ----
+  { id: 'karipap', name: 'Karipap', serving: '1 piece', kcal: 130, protein: 3, alt: 'curry puff' },
+  { id: 'cucur-udang', name: 'Cucur udang', serving: '1 piece', kcal: 140, protein: 3, alt: 'prawn fritter' },
+  { id: 'pisang-goreng', name: 'Pisang goreng', serving: '1 piece', kcal: 140, protein: 1, alt: 'banana fritter' },
+  { id: 'kuih-seri-muka', name: 'Kuih seri muka', serving: '1 piece', kcal: 190, protein: 2, sf: true },
+  { id: 'kuih-lapis', name: 'Kuih lapis', serving: '1 piece', kcal: 140, protein: 1, sf: true },
+  { id: 'kuih-talam', name: 'Kuih talam', serving: '1 piece', kcal: 150, protein: 1, sf: true },
+  { id: 'kuih-koci', name: 'Kuih koci', serving: '1 piece', kcal: 150, protein: 2, sf: true },
+  { id: 'onde-onde', name: 'Onde-onde', serving: '3 pieces', kcal: 140, protein: 1, sf: true, alt: 'buah melaka' },
+  { id: 'kuih-bahulu', name: 'Kuih bahulu', serving: '3 pieces', kcal: 120, protein: 3, sf: true },
+  { id: 'apam-balik', name: 'Apam balik', serving: '1 piece', kcal: 250, protein: 5, sf: true, alt: 'peanut pancake' },
+  { id: 'pau-kacang', name: 'Pau kacang merah', serving: '1 piece', kcal: 230, protein: 5, sf: true, alt: 'red bean bun' },
+  { id: 'cendol', name: 'Cendol', serving: '1 bowl', kcal: 380, protein: 4, sf: true },
+  { id: 'ais-kacang', name: 'Ais kacang (ABC)', serving: '1 bowl', kcal: 300, protein: 4, sf: true, alt: 'abc' },
+  { id: 'bubur-kacang-hijau', name: 'Bubur kacang hijau', serving: '1 bowl', kcal: 250, protein: 7, sf: true, alt: 'mung bean' },
+  { id: 'donut', name: 'Donut (glazed)', serving: '1 piece', kcal: 250, protein: 4, sf: true, alt: 'doughnut' },
+  { id: 'kek', name: 'Cake', serving: '1 slice', kcal: 350, protein: 4, sf: true, alt: 'kek' },
+  { id: 'biskut-krim', name: 'Cream biscuits', serving: '2 pieces', kcal: 140, protein: 2, sf: true, alt: 'biskut cookies' },
+  { id: 'aiskrim', name: 'Ice cream', serving: '1 scoop', kcal: 140, protein: 2, sf: true, alt: 'aiskrim' },
+  { id: 'coklat', name: 'Chocolate bar', serving: '1 bar (40 g)', kcal: 210, protein: 3, sf: true, alt: 'coklat' },
+
+  // ---- Fruit ----
+  { id: 'pisang', name: 'Banana', serving: '1 medium', kcal: 90, protein: 1, alt: 'pisang' },
+  { id: 'epal', name: 'Apple', serving: '1 medium', kcal: 80, protein: 0, alt: 'epal' },
+  { id: 'oren', name: 'Orange', serving: '1 medium', kcal: 60, protein: 1, alt: 'oren limau' },
+  { id: 'betik', name: 'Papaya', serving: '1 slice (≈150 g)', kcal: 60, protein: 1, alt: 'betik' },
+  { id: 'tembikai', name: 'Watermelon', serving: '1 slice (≈200 g)', kcal: 60, protein: 1, alt: 'tembikai' },
+  { id: 'mangga', name: 'Mango', serving: '1 cup (≈150 g)', kcal: 100, protein: 1, alt: 'mangga' },
+  { id: 'jambu-batu', name: 'Guava', serving: '1 medium', kcal: 70, protein: 3, alt: 'jambu batu' },
+  { id: 'nanas', name: 'Pineapple', serving: '1 cup (≈150 g)', kcal: 80, protein: 1, alt: 'nanas' },
+  { id: 'durian', name: 'Durian', serving: '3 seeds (≈100 g flesh)', kcal: 150, protein: 2 },
+  { id: 'kurma', name: 'Dates (kurma)', serving: '3 pieces', kcal: 70, protein: 1 },
+
+  // ---- Drinks ----
+  { id: 'teh-tarik', name: 'Teh tarik', serving: '1 glass', kcal: 150, protein: 3, sd: true, alt: 'tea milk' },
+  { id: 'teh-c', name: 'Teh C (evaporated milk + sugar)', serving: '1 glass', kcal: 110, protein: 2, sd: true, alt: 'tea' },
+  { id: 'teh-o', name: 'Teh O (with sugar)', serving: '1 glass', kcal: 80, protein: 0, sd: true, alt: 'tea' },
+  { id: 'teh-o-kosong', name: 'Teh O kosong (no sugar)', serving: '1 glass', kcal: 2, protein: 0, alt: 'tea plain' },
+  { id: 'kopi', name: 'Kopi (condensed milk)', serving: '1 glass', kcal: 140, protein: 2, sd: true, alt: 'coffee' },
+  { id: 'kopi-o', name: 'Kopi O (with sugar)', serving: '1 glass', kcal: 80, protein: 0, sd: true, alt: 'coffee black' },
+  { id: 'kopi-o-kosong', name: 'Kopi O kosong (no sugar)', serving: '1 glass', kcal: 5, protein: 0, alt: 'coffee black plain' },
+  { id: 'milo-ais', name: 'Milo ais', serving: '1 glass', kcal: 200, protein: 5, sd: true, alt: 'milo iced' },
+  { id: 'milo-panas', name: 'Milo panas', serving: '1 cup', kcal: 150, protein: 4, sd: true, alt: 'milo hot' },
+  { id: 'sirap-bandung', name: 'Sirap bandung', serving: '1 glass', kcal: 200, protein: 3, sd: true, alt: 'rose syrup milk' },
+  { id: 'sirap-ais', name: 'Sirap ais', serving: '1 glass', kcal: 130, protein: 0, sd: true, alt: 'rose syrup' },
+  { id: 'limau-ais', name: 'Limau ais', serving: '1 glass', kcal: 90, protein: 0, sd: true, alt: 'lime juice' },
+  { id: 'air-tebu', name: 'Air tebu', serving: '1 glass', kcal: 180, protein: 0, sd: true, alt: 'sugarcane' },
+  { id: 'jus-oren', name: 'Orange juice', serving: '1 glass', kcal: 110, protein: 2, sd: true, alt: 'jus' },
+  { id: 'soya-manis', name: 'Soya bean drink (sweetened)', serving: '1 glass', kcal: 130, protein: 7, sd: true, alt: 'soy' },
+  { id: 'soya-kosong', name: 'Soya bean drink (no sugar)', serving: '1 glass', kcal: 80, protein: 7, alt: 'soy unsweetened' },
+  { id: 'air-kelapa', name: 'Coconut water', serving: '1 glass', kcal: 50, protein: 1, alt: 'air kelapa' },
+  { id: 'susu', name: 'Fresh milk (full cream)', serving: '1 glass (250 ml)', kcal: 150, protein: 8, alt: 'susu' },
+  { id: 'susu-rendah-lemak', name: 'Low-fat milk', serving: '1 glass (250 ml)', kcal: 100, protein: 8, alt: 'susu' },
+  { id: 'soft-drink', name: 'Soft drink', serving: '1 can (325 ml)', kcal: 140, protein: 0, sd: true, alt: 'cola soda fizzy' },
+  { id: 'isotonic', name: 'Isotonic drink', serving: '1 can (325 ml)', kcal: 80, protein: 0, sd: true, alt: 'sports drink' },
+  { id: 'bubble-tea', name: 'Bubble milk tea', serving: '1 cup (500 ml)', kcal: 350, protein: 2, sd: true, alt: 'boba' },
+  { id: 'teh-hijau', name: 'Green tea (no sugar)', serving: '1 cup', kcal: 0, protein: 0, alt: 'teh hijau' }
+];

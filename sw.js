@@ -1,10 +1,11 @@
 /* Farhanah's Green Days — service worker
    Bump CACHE (fgd-v1 → fgd-v2 …) whenever you change any file. */
-var CACHE = 'fgd-v1';
+var CACHE = 'fgd-v2';
 var ASSETS = [
   './',
   'index.html',
   'style.css',
+  'foods.js',
   'app.js',
   'manifest.json',
   'icons/icon-180.png',

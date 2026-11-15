@@ -24,6 +24,32 @@ can be added to the home screen on iPhone and Android, where it opens like a nor
   restore, and export to Excel (CSV).
 - Apple-style design, dark mode, safe-area aware, works offline.
 
+### Optional: food & calories (Settings → Diet)
+
+Off by default. When switched on:
+
+- **Meals tab**: a calorie ring ("X kcal left", or "+X over goal" in neutral grey), a protein bar,
+  and Breakfast / Lunch / Dinner / Snacks with subtotals, "+ Add" and "Same as yesterday".
+  Tap an entry to change its portion; swipe left to delete.
+- **Add food sheet**: Favourites, Recent (last 10 foods), barcode scan and Quick add, plus search
+  over ~120 common Malaysian foods and drinks (`foods.js`) and your own foods. The **+** button adds
+  one standard serving in a single tap. The portion picker (½, ¾, 1, 1½, 2) has a hand-size guide.
+- **Barcode scanning**: uses the camera (native `BarcodeDetector`, or ZXing loaded from a CDN only
+  when needed) with "Type barcode instead" as a fallback. Products are looked up on
+  [Open Food Facts](https://world.openfoodfacts.org); unknown products can be entered from the label
+  and are saved, so the next scan works offline.
+- **Linked with the sugar tracker**: adding a sugary drink or sweet food switches on the matching
+  toggle for that day.
+- **Calorie goal calculator**: Mifflin-St Jeor × activity level, with Maintain / Gentle loss (−300) /
+  Steady loss (−500). It never suggests less than 1,200 kcal. Optional protein goal (≈ 1.2 g/kg).
+- **Weekly weigh-in**: weight log with a trend line, plus a gentle banner on your chosen day.
+- **Summary**: average calories and protein, days on target (±10%), and a Water / Calories chart toggle.
+- Exports: meals CSV and weight CSV. The JSON backup includes everything.
+
+> Calorie values in `foods.js` are estimates per standard serving, based on Malaysian food
+> composition data (MyFCD) and published hawker-food calorie lists. Portions vary, so consistency
+> matters more than perfection. To correct a value, edit `foods.js` and bump the cache version.
+
 ## How status works
 
 | Status | Meaning |
@@ -79,7 +105,8 @@ colour, edit `--accent` at the top of `style.css`.
 ## Privacy
 
 All data is stored **only on your device** (in the browser's `localStorage`). Nothing is sent
-anywhere and there are no accounts, trackers or analytics.
+anywhere and there are no accounts, trackers or analytics. The one exception is when you look up a
+barcode: only the barcode number is sent to Open Food Facts to fetch the product details.
 
 Because the data lives in the browser, clearing Safari/Chrome website data, or deleting the app,
 also deletes your log. **Export a backup regularly** (Settings → Export backup) and keep the file
@@ -94,7 +121,8 @@ somewhere safe. You can restore it with **Import backup**, which merges entries 
 farhanahs-green-days/
 ├── index.html      # app shell and all four tabs
 ├── style.css       # iOS-style design, light & dark themes (--accent at the top)
-├── app.js          # logic: logging, status, streaks, calendar, summary, settings, export/import
+├── app.js          # logic: logging, status, streaks, calendar, summary, settings, diet, export/import
+├── foods.js        # built-in Malaysian food list (kcal & protein per serving), easy to edit
 ├── sw.js           # service worker (offline cache, bump version after changes)
 ├── manifest.json   # PWA manifest (name, icons, colours)
 ├── icons/
