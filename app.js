@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  var VERSION = '1.2.0';
+  var VERSION = '1.2.1';
   var DATA_KEY = 'fgd-data';
   var SETTINGS_KEY = 'fgd-settings';
   var MILESTONES = {
@@ -21,7 +21,7 @@
   };
   var DEFAULT_SETTINGS = {
     theme: 'auto', waterGoal: 8, remind: false, remindTime: '21:00', welcomed: false,
-    trackDiet: false, calorieGoal: null, proteinGoal: null,
+    trackDiet: true, calorieGoal: null, proteinGoal: null,
     profile: { sex: 'female', age: null, heightCm: null, activity: 'light' }, weighDay: null
   };
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -59,6 +59,13 @@
   var data = load(DATA_KEY, {});
   var settings = Object.assign({}, DEFAULT_SETTINGS, load(SETTINGS_KEY, {}));
   settings.profile = Object.assign({}, DEFAULT_SETTINGS.profile, settings.profile || {});
+  // One-time: food & calorie tracking is now on by default, also for phones that saved "off"
+  // before this change. If she switches it off afterwards, it stays off.
+  if (!settings.dietOnByDefault) {
+    settings.trackDiet = true;
+    settings.dietOnByDefault = true;
+    store(SETTINGS_KEY, settings);
+  }
   var state = {
     chartMode: 'water',   // 'water' | 'kcal'
     flash: {},            // entry ids to highlight on next render

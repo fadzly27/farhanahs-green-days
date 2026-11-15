@@ -29,9 +29,9 @@ can be added to the home screen on iPhone and Android, where it opens like a nor
   restore, and export to Excel (CSV).
 - Apple-style design, dark mode, safe-area aware, works offline.
 
-### Optional: food & calories (Settings → Diet)
+### Food & calories (Settings → Diet)
 
-Off by default. When switched on:
+On by default, and can be switched off in Settings → Diet. When on:
 
 - **On the Today page**: a calorie ring at the top ("X kcal left", or "+X over goal" in neutral
   grey) with a protein bar. Below the dashboard are Breakfast / Lunch / Dinner / Snacks cards with
