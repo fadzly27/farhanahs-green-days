@@ -398,6 +398,8 @@ body:not(.diet-on) .diet-row { display: none !important; }
 .add-btn.same { color: var(--text-2); font-weight: 400; font-size: 15px; }
 #meals-wrap { scroll-margin-top: 8px; }
 #view-today { padding-bottom: 44px; }   /* room for the ↑ Top chip */
+a.row { text-decoration: none; color: inherit; }
+.chev-r { color: var(--text-3); font-size: 22px; line-height: 1; }
 
 /* ---------- Today dashboard ---------- */
 .status-card { cursor: default; }
