@@ -1579,7 +1579,23 @@
     setInterval(checkReminder, 30000);
     setTimeout(checkReminder, 1500);
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); });
+      // When a new version of the app takes over, reload once so it shows right away.
+      var hadController = !!navigator.serviceWorker.controller, reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!hadController || reloading || sheet.ctl) { hadController = true; return; }
+        reloading = true;
+        try { sessionStorage.setItem('fgd-updated', '1'); } catch (e) { }
+        location.reload();
+      });
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').then(function (reg) {
+          // check for a new version whenever the app comes back to the front
+          document.addEventListener('visibilitychange', function () { if (!document.hidden) reg.update().catch(function () { }); });
+        }).catch(function () { });
+      });
+      try {
+        if (sessionStorage.getItem('fgd-updated')) { sessionStorage.removeItem('fgd-updated'); setTimeout(function () { toast('App updated to version ' + VERSION + ' ✨', 3000); }, 600); }
+      } catch (e) { }
     }
   }
   init();

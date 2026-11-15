@@ -1,6 +1,6 @@
 /* Farhanah's Green Days — service worker
    Bump CACHE (fgd-v1 → fgd-v2 …) whenever you change any file. */
-var CACHE = 'fgd-v2';
+var CACHE = 'fgd-v3';
 var ASSETS = [
   './',
   'index.html',
@@ -15,7 +15,11 @@ var ASSETS = [
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
-    caches.open(CACHE).then(function (cache) { return cache.addAll(ASSETS); }).then(function () { return self.skipWaiting(); })
+    // cache: 'reload' skips the browser's HTTP cache (GitHub Pages caches files for 10 min),
+    // so a new version never gets filled with old files.
+    caches.open(CACHE).then(function (cache) {
+      return cache.addAll(ASSETS.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+    }).then(function () { return self.skipWaiting(); })
   );
 });
 
@@ -35,7 +39,8 @@ self.addEventListener('fetch', function (event) {
   event.respondWith(
     caches.open(CACHE).then(function (cache) {
       return cache.match(req, { ignoreSearch: true }).then(function (cached) {
-        var network = fetch(req).then(function (res) {
+        // revalidate against the server, not the HTTP cache
+        var network = fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then(function (res) {
           if (res && res.ok && res.type === 'basic') cache.put(req, res.clone());
           return res;
         }).catch(function () {
