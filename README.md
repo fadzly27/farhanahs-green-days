@@ -12,12 +12,17 @@ can be added to the home screen on iPhone and Android, where it opens like a nor
 
 ## Features
 
-- **Today**: log sugary drinks, sweet food, processed/fried food, veggies/fruit, water (with a goal),
-  sugar cravings, mood and notes. Every change saves automatically; "Save today" logs a perfect day
-  where nothing needed ticking.
+- **Today**: one scrolling page.
+  - **Dashboard**: the day's status, showing which foods caused any sugar, plus sugar toggles to
+    correct it. A water card (+ Glass / + Bottle / Undo), highlights (veggie servings,
+    fried/processed, protein) and one gentle tip.
+  - **Meals** (when food tracking is on): Breakfast, Lunch, Dinner and Snacks below the dashboard.
+  - **Evening check-in**: cravings, mood and notes, collapsible.
+  - Every change saves automatically; "Save today" logs a perfect day where nothing needed ticking.
 - **Gentle feedback**: a coloured status for each day, kind messages (never guilt-tripping), a
   🔥 streak and little celebrations at 3, 7, 14, 30, 60 and 100 green days.
-- **Calendar**: month view with green / yellow / red days. Tap any day to view or edit it.
+- **Calendar**: month view with green / yellow / red days. Tap a day to see a summary, then
+  "Open this day" to edit it.
 - **Summary**: weekly overview, average water, cravings resisted, veggie days, a 30-day chart and
   all-time stats (current streak, best streak, total green days, days logged).
 - **Settings**: Auto / Light / Dark theme, daily water goal, an optional reminder, JSON backup and
@@ -28,9 +33,13 @@ can be added to the home screen on iPhone and Android, where it opens like a nor
 
 Off by default. When switched on:
 
-- **Meals tab**: a calorie ring ("X kcal left", or "+X over goal" in neutral grey), a protein bar,
-  and Breakfast / Lunch / Dinner / Snacks with subtotals, "+ Add" and "Same as yesterday".
-  Tap an entry to change its portion; swipe left to delete.
+- **On the Today page**: a calorie ring at the top ("X kcal left", or "+X over goal" in neutral
+  grey) with a protein bar. Below the dashboard are Breakfast / Lunch / Dinner / Snacks cards with
+  subtotals, "+ Add food" and "Same as yesterday". Tap an entry to change its portion or meal;
+  swipe left to delete, with Undo. Fried foods and veggies/fruit fill in the highlights
+  automatically.
+- **Home-screen shortcut**: long-press the app icon (Android) for **Add food**, or open
+  `./?action=add-food`.
 - **Add food sheet**: Favourites, Recent (last 10 foods), barcode scan and Quick add, plus search
   over ~120 common Malaysian foods and drinks (`foods.js`) and your own foods. The **+** button adds
   one standard serving in a single tap. The portion picker (½, ¾, 1, 1½, 2) has a hand-size guide.

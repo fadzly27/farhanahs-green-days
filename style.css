@@ -367,12 +367,15 @@ body:not(.diet-on) .diet-row { display: none !important; }
 .pbar { height: 6px; border-radius: 3px; background: var(--fill-2); margin-top: 5px; overflow: hidden; }
 .pbar i { display: block; height: 100%; border-radius: 3px; background: var(--protein); transition: width 0.4s ease; }
 
-/* meal sections */
-.meal-head { display: flex; justify-content: space-between; align-items: baseline; }
-.meal-head .section-label { margin-right: 0; }
-.meal-sub { font-size: 13px; color: var(--text-2); margin: 26px 16px 7px 0; font-variant-numeric: tabular-nums; }
+/* meal cards (on the Today page) */
+.meal-card { margin-top: 10px; scroll-margin-top: 16px; }
+.meal-card-head { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 16px 6px; }
+.meal-name { font-size: 15px; font-weight: 600; }
+.meal-sub { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .entry { position: relative; overflow: hidden; }
-.entry + .entry::before, .entry + .row::before, .row + .entry::before {
+.entry.flash .entry-main { animation: flash 1.4s ease; }
+@keyframes flash { 0%, 35% { background: color-mix(in srgb, var(--accent) 16%, var(--card)); } 100% { background: var(--card); } }
+.entry + .entry::before, .entry + .row::before, .row + .entry::before, .meal-card-head + .entry::before, .meal-card-head + .row::before {
   content: ""; position: absolute; top: 0; right: 0; left: 16px; border-top: 0.5px solid var(--sep); z-index: 2;
 }
 .entry-del {
@@ -390,10 +393,79 @@ body:not(.diet-on) .diet-row { display: none !important; }
 .entry-name { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .entry-meta { font-size: 13px; color: var(--text-2); margin-top: 1px; }
 .entry-kcal { font-variant-numeric: tabular-nums; font-size: 16px; white-space: nowrap; }
-.add-row { color: var(--accent); font-weight: 500; }
-.add-row .row-icon { font-size: 22px; font-weight: 400; }
-.same-btn { margin-left: auto; font-size: 14px; color: var(--accent); padding: 4px 0; flex: none; }
-.same-btn:disabled { color: var(--text-3); }
+.add-row { color: var(--accent); font-weight: 500; min-height: 46px; }
+.add-row .row-icon { font-size: 18px; font-weight: 400; }
+.add-btn.same { color: var(--text-2); font-weight: 400; font-size: 15px; }
+#meals-wrap { scroll-margin-top: 8px; }
+#view-today { padding-bottom: 44px; }   /* room for the ↑ Top chip */
+
+/* ---------- Today dashboard ---------- */
+.status-card { cursor: default; }
+.status-text { min-width: 0; }
+.status-causes { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+.status-causes::before { content: "↳ "; }
+.sugar-card { margin-top: 8px; }
+.water-card { margin-top: 10px; }
+.water-top { display: flex; align-items: center; gap: 12px; }
+.water-ml { color: var(--text-2); font-size: 15px; font-variant-numeric: tabular-nums; }
+.water-btns { display: grid; grid-template-columns: 1fr 1fr 0.8fr; gap: 8px; margin-top: 12px; }
+.pill-btn {
+  padding: 9px 6px; border-radius: 10px; font-size: 15px; font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 13%, transparent); color: var(--accent);
+}
+.pill-btn:active { transform: scale(0.97); }
+.pill-btn.plain { background: var(--fill-2); color: var(--text); font-weight: 500; }
+.pill-btn:disabled { color: var(--text-3); }
+.water-note { margin: 8px 0 0; font-size: 12px; color: var(--text-2); }
+.highlights { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.highlights.three { grid-template-columns: repeat(3, 1fr); }
+.hl {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 11px 12px; text-align: left; min-width: 0;
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); box-sizing: border-box;
+  border: 1.5px solid transparent; transition: border-color 0.2s ease;
+}
+.hl-icon { font-size: 18px; }
+.hl-val { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.hl-val small { font-size: 13px; color: var(--text-2); font-weight: 500; }
+.hl-lbl { font-size: 12px; color: var(--text-2); line-height: 1.25; }
+.hl.on.good { border-color: var(--green); }
+.hl.on.bad { border-color: var(--orange); }
+.tip {
+  display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding: 12px 14px; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--green) 12%, var(--card)); font-size: 15px; line-height: 1.35;
+}
+.tip-icon { flex: none; }
+
+/* evening check-in */
+.checkin { margin-top: 26px; }
+.checkin-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; text-align: left; min-height: 56px; }
+.checkin-titles { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.checkin-title { font-weight: 600; }
+.checkin-sum { font-size: 13px; color: var(--text-2); }
+.chev { color: var(--text-3); font-size: 22px; transition: transform 0.25s ease; }
+.checkin.open .chev { transform: rotate(90deg); }
+.checkin-body { padding: 0 16px 16px; }
+.mini-label { font-size: 13px; font-weight: 400; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.2px; margin: 10px 0 7px; }
+.checkin-body textarea { background: var(--fill-2); border-radius: 10px; padding: 10px 12px; min-height: 72px; }
+
+/* ↑ Top chip */
+.top-chip {
+  position: fixed; left: 50%; bottom: calc(var(--tab-h) + var(--safe-bottom) + 12px); z-index: 15;
+  transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+  padding: 7px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--accent);
+  background: var(--tabbar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.12), 0 0 0 0.5px var(--sep);
+  transition: opacity 0.2s ease, transform 0.25s ease;
+}
+.top-chip.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+
+/* toast with an Undo action */
+.toast.has-action { pointer-events: auto; display: flex; align-items: center; gap: 14px; text-align: left; }
+.toast-action { color: #64d2ff; font-weight: 700; font-size: 15px; padding: 2px 4px; flex: none; }
+
+/* calendar day sheet */
+.day-meal .row-text { font-size: 15px; }
+.day-notes { font-size: 15px; white-space: pre-wrap; }
 
 /* bottom sheet */
 .sheet-wrap { position: fixed; inset: 0; z-index: 40; }

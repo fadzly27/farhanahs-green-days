@@ -46,88 +46,83 @@
       </header>
 
       <div class="banner" id="reminder-banner" hidden>You haven't logged today yet, Farhanah 🙂</div>
+      <div class="banner" id="weigh-banner-today" hidden></div>
 
-      <div class="card status-card" id="status-card">
-        <div class="status-dot" id="status-dot"></div>
-        <div>
-          <div class="status-title" id="status-title">Not logged yet</div>
-          <div class="status-msg" id="status-msg"></div>
-        </div>
-      </div>
+      <!-- 1. Dashboard -->
+      <div id="dashboard">
+        <div class="card pad ring-card diet-only" id="kcal-card" role="button" tabindex="0" aria-label="Calories today, go to meals"></div>
 
-      <h2 class="section-label">Sugar</h2>
-      <div class="card list">
-        <label class="row">
-          <span class="row-icon">🧋</span><span class="row-text">Sugary drink</span>
-          <input type="checkbox" class="switch bad" data-field="sugaryDrink">
-        </label>
-        <label class="row">
-          <span class="row-icon">🍰</span><span class="row-text">Sweet food</span>
-          <input type="checkbox" class="switch bad" data-field="sweetFood">
-        </label>
-      </div>
-
-      <h2 class="section-label">Food</h2>
-      <div class="card list">
-        <label class="row">
-          <span class="row-icon">🍟</span><span class="row-text">Processed / fried</span>
-          <input type="checkbox" class="switch bad" data-field="processed">
-        </label>
-        <label class="row">
-          <span class="row-icon">🥦</span><span class="row-text">Veggies / fruit</span>
-          <input type="checkbox" class="switch" data-field="veggiesFruit">
-        </label>
-      </div>
-
-      <h2 class="section-label">Water</h2>
-      <div class="card pad">
-        <div class="stepper-row">
-          <span class="row-icon">💧</span>
-          <span class="water-text"><strong id="water-count">0</strong> / <span id="water-goal">8</span> glasses</span>
-          <div class="stepper">
-            <button class="round-btn" id="water-minus" aria-label="One glass less">−</button>
-            <button class="round-btn" id="water-plus" aria-label="One glass more">+</button>
+        <div class="card status-card" id="status-card" role="button" tabindex="0">
+          <div class="status-dot" id="status-dot"></div>
+          <div class="status-text">
+            <div class="status-title" id="status-title">Not logged yet</div>
+            <div class="status-msg" id="status-msg"></div>
+            <div class="status-causes" id="status-causes"></div>
           </div>
         </div>
-        <div class="progress"><div class="progress-bar" id="water-bar"></div></div>
+        <div class="card list sugar-card">
+          <label class="row">
+            <span class="row-icon">🧋</span><span class="row-text">Sugary drink</span>
+            <input type="checkbox" class="switch bad" data-field="sugaryDrink">
+          </label>
+          <label class="row">
+            <span class="row-icon">🍰</span><span class="row-text">Sweet food</span>
+            <input type="checkbox" class="switch bad" data-field="sweetFood">
+          </label>
+        </div>
+
+        <div class="card pad water-card">
+          <div class="water-top">
+            <span class="row-icon">💧</span>
+            <span class="water-text"><strong id="water-count">0</strong> / <span id="water-goal">8</span> glasses</span>
+            <span class="water-ml" id="water-ml">0 L</span>
+          </div>
+          <div class="progress"><div class="progress-bar" id="water-bar"></div></div>
+          <div class="water-btns">
+            <button class="pill-btn" id="water-glass">+ Glass</button>
+            <button class="pill-btn" id="water-bottle">+ Bottle</button>
+            <button class="pill-btn plain" id="water-undo">Undo</button>
+          </div>
+          <p class="water-note">1 glass ≈ 250 ml · 1 bottle ≈ 500 ml</p>
+        </div>
+
+        <div class="highlights" id="highlights"></div>
+        <div class="tip" id="tip" hidden></div>
       </div>
 
-      <h2 class="section-label">Sugar cravings</h2>
-      <div class="segmented" id="seg-craving" data-field="craving">
-        <button data-value="none">None</button>
-        <button data-value="resisted">Resisted</button>
-        <button data-value="gaveIn">Gave in</button>
+      <!-- 2. Meals (diet tracking only) -->
+      <div class="diet-only" id="meals-wrap">
+        <h2 class="section-label">Meals</h2>
+        <div id="meals-list"></div>
+        <p class="footnote">Calories are estimates. Shop portions vary, so consistency matters more than perfection.</p>
       </div>
 
-      <h2 class="section-label">How I feel</h2>
-      <div class="segmented emoji" id="seg-mood" data-field="mood">
-        <button data-value="bad" aria-label="Not great">😞</button>
-        <button data-value="okay" aria-label="Okay">😐</button>
-        <button data-value="good" aria-label="Good">😊</button>
-      </div>
-
-      <h2 class="section-label">Notes</h2>
-      <div class="card">
-        <textarea id="notes" rows="3" placeholder="Anything you want to remember about today… (optional)"></textarea>
+      <!-- 3. Evening check-in -->
+      <div class="card checkin" id="checkin">
+        <button class="checkin-head" id="checkin-toggle" aria-expanded="false" aria-controls="checkin-body">
+          <span class="row-icon">🌙</span>
+          <span class="checkin-titles"><span class="checkin-title">Evening check-in</span><span class="checkin-sum" id="checkin-sum"></span></span>
+          <span class="chev" aria-hidden="true">›</span>
+        </button>
+        <div class="checkin-body" id="checkin-body" hidden>
+          <h3 class="mini-label">Sugar cravings</h3>
+          <div class="segmented" id="seg-craving" data-field="craving">
+            <button data-value="none">None</button>
+            <button data-value="resisted">Resisted</button>
+            <button data-value="gaveIn">Gave in</button>
+          </div>
+          <h3 class="mini-label">How I feel</h3>
+          <div class="segmented emoji" id="seg-mood" data-field="mood">
+            <button data-value="bad" aria-label="Not great">😞</button>
+            <button data-value="okay" aria-label="Okay">😐</button>
+            <button data-value="good" aria-label="Good">😊</button>
+          </div>
+          <h3 class="mini-label">Notes</h3>
+          <textarea id="notes" rows="3" placeholder="Anything you want to remember about today… (optional)"></textarea>
+        </div>
       </div>
 
       <button class="btn btn-primary btn-block" id="save-btn">Save today</button>
-    </section>
-
-    <!-- MEALS (only when diet tracking is on) -->
-    <section class="view" id="view-meals" data-view="meals">
-      <header class="page-head">
-        <div class="date-nav">
-          <button class="icon-btn" id="meals-prev" aria-label="Previous day">‹</button>
-          <span class="date-label" id="meals-label"></span>
-          <button class="icon-btn" id="meals-next" aria-label="Next day">›</button>
-        </div>
-        <h1 class="large-title">Meals</h1>
-      </header>
-      <div class="banner" id="weigh-banner-meals" hidden></div>
-      <div class="card pad ring-card" id="meals-ring"></div>
-      <div id="meals-list"></div>
-      <p class="footnote">Calories are estimates. Shop portions vary, so consistency matters more than perfection.</p>
     </section>
 
     <!-- CALENDAR -->
@@ -154,7 +149,7 @@
       </div>
       <h2 class="section-label">This month</h2>
       <div class="stats three" id="month-stats"></div>
-      <p class="footnote">Tap any past day to view or edit it.</p>
+      <p class="footnote">Tap any day to see what you logged.</p>
     </section>
 
     <!-- SUMMARY -->
@@ -288,10 +283,6 @@
       <svg viewBox="0 0 24 24"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>
       <span>Today</span>
     </button>
-    <button data-tab="meals" aria-label="Meals" id="tab-meals" hidden>
-      <svg viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10"/><path d="M17 21V3c-2.2 1.2-3.5 3.6-3.5 7v3.5H17"/></svg>
-      <span>Meals</span>
-    </button>
     <button data-tab="calendar" aria-label="Calendar">
       <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
       <span>Calendar</span>
@@ -306,6 +297,7 @@
     </button>
   </nav>
 
+  <button class="top-chip" id="top-chip" aria-label="Back to top">↑ Top</button>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <!-- iOS-style bottom sheet (content is rendered by app.js) -->
