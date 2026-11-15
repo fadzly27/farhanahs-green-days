@@ -129,7 +129,7 @@ somewhere safe. You can restore it with **Import backup**, which merges entries 
 ```
 farhanahs-green-days/
 ├── index.html      # app shell and all four tabs
-├── guide.html      # simple user guide in Malay (iPhone), linked from Settings
+├── guide.html      # simple user guide (iPhone), linked from Settings
 ├── style.css       # iOS-style design, light & dark themes (--accent at the top)
 ├── app.js          # logic: logging, status, streaks, calendar, summary, settings, diet, export/import
 ├── foods.js        # built-in Malaysian food list (kcal & protein per serving), easy to edit
