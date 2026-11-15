@@ -1,0 +1,60 @@
+/* Farhanah's Green Days — service worker
+   Bump CACHE (fgd-v1 → fgd-v2 …) whenever you change any file. */
+var CACHE = 'fgd-v1';
+var ASSETS = [
+  './',
+  'index.html',
+  'style.css',
+  'app.js',
+  'manifest.json',
+  'icons/icon-180.png',
+  'icons/icon-192.png',
+  'icons/icon-512.png'
+];
+
+self.addEventListener('install', function (event) {
+  event.waitUntil(
+    caches.open(CACHE).then(function (cache) { return cache.addAll(ASSETS); }).then(function () { return self.skipWaiting(); })
+  );
+});
+
+self.addEventListener('activate', function (event) {
+  event.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.filter(function (k) { return k.indexOf('fgd-') === 0 && k !== CACHE; }).map(function (k) { return caches.delete(k); }));
+    }).then(function () { return self.clients.claim(); })
+  );
+});
+
+// Stale-while-revalidate: answer from cache instantly, refresh the cache in the background.
+self.addEventListener('fetch', function (event) {
+  var req = event.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+
+  event.respondWith(
+    caches.open(CACHE).then(function (cache) {
+      return cache.match(req, { ignoreSearch: true }).then(function (cached) {
+        var network = fetch(req).then(function (res) {
+          if (res && res.ok && res.type === 'basic') cache.put(req, res.clone());
+          return res;
+        }).catch(function () {
+          if (req.mode === 'navigate') return cache.match('index.html');
+          return cached;
+        });
+        if (cached) { event.waitUntil(network.catch(function () { })); return cached; }
+        return network;
+      });
+    })
+  );
+});
+
+// Tapping a reminder notification opens (or focuses) the app.
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+      for (var i = 0; i < list.length; i++) { if ('focus' in list[i]) return list[i].focus(); }
+      return self.clients.openWindow('./');
+    })
+  );
+});

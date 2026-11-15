@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Farhanah's Green Days</title>
+  <meta name="description" content="One green day at a time 🌿 — a personal daily tracker for eating clean and cutting sugar.">
+  <meta name="theme-color" content="#f2f2f7" id="meta-theme">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Green Days">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Welcome (first launch only) -->
+  <div id="welcome" class="welcome" hidden>
+    <div class="welcome-card">
+      <div class="welcome-leaf">🌿</div>
+      <h1>Hi Farhanah 👋</h1>
+      <p class="welcome-lead">I made this little app just for you.</p>
+      <p>Tick a few things each day, and watch your green days grow.</p>
+      <button class="btn btn-primary btn-large" id="welcome-start">Let's start</button>
+    </div>
+  </div>
+
+  <main class="app" id="app">
+
+    <!-- TODAY -->
+    <section class="view" id="view-today" data-view="today">
+      <header class="page-head">
+        <div class="date-nav">
+          <button class="icon-btn" id="day-prev" aria-label="Previous day">‹</button>
+          <span class="date-label" id="day-label"></span>
+          <button class="icon-btn" id="day-next" aria-label="Next day">›</button>
+        </div>
+        <p class="greeting" id="greeting"></p>
+        <div class="title-row">
+          <h1 class="large-title" id="day-title">Today</h1>
+          <span class="chip" id="streak-chip" title="Current streak">🔥 0</span>
+        </div>
+      </header>
+
+      <div class="banner" id="reminder-banner" hidden>You haven't logged today yet, Farhanah 🙂</div>
+
+      <div class="card status-card" id="status-card">
+        <div class="status-dot" id="status-dot"></div>
+        <div>
+          <div class="status-title" id="status-title">Not logged yet</div>
+          <div class="status-msg" id="status-msg"></div>
+        </div>
+      </div>
+
+      <h2 class="section-label">Sugar</h2>
+      <div class="card list">
+        <label class="row">
+          <span class="row-icon">🧋</span><span class="row-text">Sugary drink</span>
+          <input type="checkbox" class="switch bad" data-field="sugaryDrink">
+        </label>
+        <label class="row">
+          <span class="row-icon">🍰</span><span class="row-text">Sweet food</span>
+          <input type="checkbox" class="switch bad" data-field="sweetFood">
+        </label>
+      </div>
+
+      <h2 class="section-label">Food</h2>
+      <div class="card list">
+        <label class="row">
+          <span class="row-icon">🍟</span><span class="row-text">Processed / fried</span>
+          <input type="checkbox" class="switch bad" data-field="processed">
+        </label>
+        <label class="row">
+          <span class="row-icon">🥦</span><span class="row-text">Veggies / fruit</span>
+          <input type="checkbox" class="switch" data-field="veggiesFruit">
+        </label>
+      </div>
+
+      <h2 class="section-label">Water</h2>
+      <div class="card pad">
+        <div class="stepper-row">
+          <span class="row-icon">💧</span>
+          <span class="water-text"><strong id="water-count">0</strong> / <span id="water-goal">8</span> glasses</span>
+          <div class="stepper">
+            <button class="round-btn" id="water-minus" aria-label="One glass less">−</button>
+            <button class="round-btn" id="water-plus" aria-label="One glass more">+</button>
+          </div>
+        </div>
+        <div class="progress"><div class="progress-bar" id="water-bar"></div></div>
+      </div>
+
+      <h2 class="section-label">Sugar cravings</h2>
+      <div class="segmented" id="seg-craving" data-field="craving">
+        <button data-value="none">None</button>
+        <button data-value="resisted">Resisted</button>
+        <button data-value="gaveIn">Gave in</button>
+      </div>
+
+      <h2 class="section-label">How I feel</h2>
+      <div class="segmented emoji" id="seg-mood" data-field="mood">
+        <button data-value="bad" aria-label="Not great">😞</button>
+        <button data-value="okay" aria-label="Okay">😐</button>
+        <button data-value="good" aria-label="Good">😊</button>
+      </div>
+
+      <h2 class="section-label">Notes</h2>
+      <div class="card">
+        <textarea id="notes" rows="3" placeholder="Anything you want to remember about today… (optional)"></textarea>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="save-btn">Save today</button>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="view" id="view-calendar" data-view="calendar">
+      <header class="page-head">
+        <h1 class="large-title">Calendar</h1>
+      </header>
+      <div class="card pad">
+        <div class="month-nav">
+          <button class="icon-btn" id="month-prev" aria-label="Previous month">‹</button>
+          <span class="month-label" id="month-label"></span>
+          <button class="icon-btn" id="month-next" aria-label="Next month">›</button>
+        </div>
+        <div class="cal-grid cal-head">
+          <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="legend">
+          <span><i class="ld green"></i>Green</span>
+          <span><i class="ld yellow"></i>Yellow</span>
+          <span><i class="ld red"></i>Red</span>
+          <span><i class="ld none"></i>Not logged</span>
+        </div>
+      </div>
+      <h2 class="section-label">This month</h2>
+      <div class="stats three" id="month-stats"></div>
+      <p class="footnote">Tap any past day to view or edit it.</p>
+    </section>
+
+    <!-- SUMMARY -->
+    <section class="view" id="view-summary" data-view="summary">
+      <header class="page-head">
+        <h1 class="large-title">Summary</h1>
+      </header>
+      <div class="card pad">
+        <div class="month-nav">
+          <button class="icon-btn" id="week-prev" aria-label="Previous week">‹</button>
+          <span class="month-label small" id="week-label"></span>
+          <button class="icon-btn" id="week-next" aria-label="Next week">›</button>
+        </div>
+        <div class="week-dots" id="week-dots"></div>
+      </div>
+      <div class="stats two" id="week-stats"></div>
+
+      <h2 class="section-label">Last 30 days</h2>
+      <div class="card pad">
+        <div id="chart"></div>
+        <p class="chart-caption">Bar height = glasses of water · colour = day status · dashed line = goal</p>
+      </div>
+
+      <h2 class="section-label">All time</h2>
+      <div class="stats two" id="all-stats"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings" data-view="settings">
+      <header class="page-head">
+        <h1 class="large-title">Settings</h1>
+      </header>
+
+      <h2 class="section-label">Appearance</h2>
+      <div class="segmented" id="seg-theme">
+        <button data-value="auto">Auto</button>
+        <button data-value="light">Light</button>
+        <button data-value="dark">Dark</button>
+      </div>
+
+      <h2 class="section-label">Daily goal</h2>
+      <div class="card list">
+        <div class="row">
+          <span class="row-icon">💧</span><span class="row-text">Water goal <span class="muted" id="goal-text">8 glasses</span></span>
+          <div class="stepper">
+            <button class="round-btn" id="goal-minus" aria-label="Lower goal">−</button>
+            <button class="round-btn" id="goal-plus" aria-label="Raise goal">+</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="section-label">Reminder</h2>
+      <div class="card list">
+        <label class="row">
+          <span class="row-icon">🔔</span><span class="row-text">Daily reminder</span>
+          <input type="checkbox" class="switch" id="remind-toggle">
+        </label>
+        <div class="row" id="remind-time-row">
+          <span class="row-icon">⏰</span><span class="row-text">Time</span>
+          <input type="time" id="remind-time" value="21:00">
+        </div>
+      </div>
+      <p class="footnote">Reminders only work while the app is open (that's a limit of web apps). For a reliable nudge, a daily phone alarm works best ⏰</p>
+
+      <h2 class="section-label">Data</h2>
+      <div class="card list">
+        <button class="row row-btn" id="export-json"><span class="row-icon">📦</span><span class="row-text link">Export backup (JSON)</span></button>
+        <button class="row row-btn" id="export-csv"><span class="row-icon">📊</span><span class="row-text link">Export to Excel (CSV)</span></button>
+        <button class="row row-btn" id="import-json"><span class="row-icon">📥</span><span class="row-text link">Import backup</span></button>
+        <button class="row row-btn" id="delete-all"><span class="row-icon">🗑️</span><span class="row-text danger">Delete all data</span></button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+
+      <h2 class="section-label">How status works</h2>
+      <div class="card list">
+        <div class="row"><i class="ld green"></i><span class="row-text"><strong>Green</strong> — no sugary drink and no sweet food</span></div>
+        <div class="row"><i class="ld yellow"></i><span class="row-text"><strong>Yellow</strong> — just one of the two</span></div>
+        <div class="row"><i class="ld red"></i><span class="row-text"><strong>Red</strong> — both</span></div>
+      </div>
+      <p class="footnote">Your streak counts green days in a row. If today isn't logged yet, it counts up to yesterday, so you never lose it before bedtime.</p>
+
+      <footer class="settings-footer">
+        <p class="made">Made with 💚 for Farhanah</p>
+        <p id="version-text">Version</p>
+        <p>All your data stays on your device only.</p>
+      </footer>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-tab="today" aria-label="Today">
+      <svg viewBox="0 0 24 24"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>
+      <span>Today</span>
+    </button>
+    <button data-tab="calendar" aria-label="Calendar">
+      <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+      <span>Calendar</span>
+    </button>
+    <button data-tab="summary" aria-label="Summary">
+      <svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>
+      <span>Summary</span>
+    </button>
+    <button data-tab="settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
