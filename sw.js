@@ -1,6 +1,6 @@
 /* Farhanah's Green Days — service worker
    Bump CACHE (fgd-v1 → fgd-v2 …) whenever you change any file. */
-var CACHE = 'fgd-v9';
+var CACHE = 'fgd-v10';
 var ASSETS = [
   './',
   'index.html',

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  var VERSION = '1.3.0';
+  var VERSION = '1.3.1';
   var DATA_KEY = 'fgd-data';
   var SETTINGS_KEY = 'fgd-settings';
   var MILESTONES = {
@@ -939,8 +939,63 @@
       view: 'list', meal: opts.meal || defaultMeal(), chip: null, q: '', results: [], food: null, portion: 1, mode: 'g', amount: 100,
       sd: false, sf: false, edit: null, product: null, status: '',
       similar: null,   // { code, name } while picking a similar food for a scanned barcode
-      plate: { carb: 'rice', carbs: 1, prot: 'chicken', prots: 1, cook: 'plain', veg: 1, vcook: 'stir', extra: 1 }
+      plate: { carb: 'rice', carbs: 1, prot: 'chicken', prots: 1, cook: 'plain', veg: 1, vcook: 'stir', extra: 1 },
+      fedit: null, fback: 'list'   // saved food being edited, and the view to return to
     };
+    if (opts.chip) s.chip = opts.chip;
+
+    // ----- my saved foods (Quick add "save", scanned barcodes): edit / delete -----
+    function myFoods() {
+      return Object.keys(customFoods).map(getFood).filter(Boolean).sort(function (a, b) { return a.name.localeCompare(b.name); });
+    }
+    function deleteSavedFood(id) {
+      var saved = customFoods[id]; if (!saved) return;
+      var fi = favs.indexOf(id);
+      delete customFoods[id]; saveFoods();
+      if (fi >= 0) { favs.splice(fi, 1); saveFavs(); }
+      toast('Deleted ' + saved.name + ' from your foods', 6000, false, {
+        label: 'Undo',
+        fn: function () {
+          customFoods[id] = saved; saveFoods();
+          if (fi >= 0 && favs.indexOf(id) < 0) { favs.splice(fi, 0, id); saveFavs(); }
+          if (sheet.ctl === ctl) renderSheet();
+        }
+      });
+    }
+    function fEditHTML() {
+      var c = customFoods[s.fedit] || {}, per = !!c.per100, u = c.unit === 'ml' ? 'ml' : 'g';
+      return headHTML({ act: 'back', label: '‹ Back' }, 'Edit saved food', { act: 'confirm', label: 'Save' }) +
+        '<div class="card list">' +
+        formRow('Name', 'fe-name', c.name, '', 'type="text" maxlength="100" autocomplete="off"') +
+        (per ? '' : formRow('Serving', 'fe-serving', c.serving || '1 serving', '', 'type="text" maxlength="40" autocomplete="off"')) +
+        formRow(per ? 'kcal / 100 ' + u : 'Calories', 'fe-kcal', c.kcal, 'kcal', 'type="number" inputmode="decimal" min="0" max="5000"') +
+        formRow(per ? 'Protein / 100 ' + u : 'Protein', 'fe-prot', c.protein, 'g', 'type="number" inputmode="decimal" min="0" max="500"') +
+        '</div>' +
+        (c.barcode ? '<p class="note">Barcode ' + esc(c.barcode) + '. Label values are per 100 ' + u + '.</p>' : '') +
+        flagsHTML(!!c.isSugaryDrink, !!c.isSweetFood) +
+        '<p class="note">Changes apply the next time you add this food. Foods already logged keep their old numbers.</p>' +
+        '<button class="btn-danger-plain" data-act="fdel-cur">🗑 Delete this saved food</button>';
+    }
+    function confirmFEdit() {
+      var c = customFoods[s.fedit]; if (!c) { s.view = s.fback; renderSheet(); return; }
+      var name = str($('fe-name').value, 100), k = num($('fe-kcal').value), pr = num($('fe-prot').value) || 0;
+      if (!name) { toast('Add a name'); $('fe-name').focus(); return; }
+      if (k == null || k < 0 || k > (c.per100 ? 1000 : 5000)) { toast('Enter the calories'); $('fe-kcal').focus(); return; }
+      c.name = name; c.kcal = round1(k); c.protein = round1(clamp(pr, 0, 500));
+      if (!c.per100 && $('fe-serving')) c.serving = str($('fe-serving').value, 40) || '1 serving';
+      if (c.per100 && c.perServing && c.perServing.qty) {
+        c.perServing.kcal = round1(c.kcal * c.perServing.qty / 100); c.perServing.protein = round1(c.protein * c.perServing.qty / 100);
+      }
+      c.isSugaryDrink = !!s.sd; c.isSweetFood = !!s.sf;
+      saveFoods();
+      toast('Saved ✓');
+      if (s.fback === 'portion' && s.food && s.food.id === c.id) s.food = getFood(c.id);   // keep the chosen portion
+      s.view = s.fback; renderSheet();
+    }
+    function openFEdit(id, back) {
+      var c = customFoods[id]; if (!c) return;
+      s.fedit = id; s.fback = back; s.sd = !!c.isSugaryDrink; s.sf = !!c.isSweetFood; s.view = 'fedit'; renderSheet();
+    }
     if (opts.editId) {
       var m = dayMeals(state.view).filter(function (x) { return x.id === opts.editId; })[0];
       if (m) {
@@ -978,6 +1033,7 @@
     function resultsHTML() {
       var groups = [];
       if (s.q) groups.push(['', searchFoods(s.q)]);
+      else if (s.chip === 'mine') return myFoodsHTML();
       else if (s.chip === 'favs') groups.push(['Favourites', favs.map(getFood).filter(Boolean)]);
       else if (s.chip === 'recent') groups.push(['Recent', recentFoods()]);
       else {
@@ -1004,6 +1060,19 @@
       });
       return html;
     }
+    function myFoodsHTML() {
+      var list = myFoods();
+      s.results = [];
+      var html = '<h2 class="section-label mine-head">My saved foods <button class="small-link" data-act="mine-close">Close</button></h2>';
+      if (!list.length) return html + '<div class="card"><div class="empty">Nothing saved yet. Foods you save from ✏️ Quick add or 📷 Scan barcode show up here.</div></div>';
+      return html + '<div class="card list">' + list.map(function (f) {
+        var i = s.results.push(f) - 1;
+        return '<div class="food-row"><button class="food-pick" data-act="pick" data-i="' + i + '"><div class="food-name">' + esc(f.name) + foodTags(f) + '</div>' +
+          '<div class="food-meta">' + esc(servingText(f)) + ' · ' + fmt(listKcal(f)) + ' kcal · ' + round1(listProt(f)) + ' g protein</div></button>' +
+          '<button class="icon-btn" data-act="fedit" data-i="' + i + '" aria-label="Edit ' + esc(f.name) + '">✏️</button>' +
+          '<button class="icon-btn" data-act="fdel" data-i="' + i + '" aria-label="Delete ' + esc(f.name) + '">🗑</button></div>';
+      }).join('') + '</div><p class="note">✏️ change the name or calories · 🗑 delete. Foods already logged stay as they are.</p>';
+    }
     function listHTML() {
       return headHTML({ act: 'close', label: 'Cancel' }, 'Add food', { act: 'close', label: 'Done' }) +
         segHTML('meal', MEALS.map(function (m) { return [m.id, MEAL_LABEL[m.id]]; }), s.meal) +
@@ -1015,6 +1084,8 @@
         (s.similar ? '<div class="similar-banner">🔍 Pick a food similar to <b>' + esc(s.similar.name || 'your product') + '</b>. It’ll be remembered for this barcode. <button class="small-link" data-act="similar-cancel">Cancel</button></div>' : '') +
         '<input class="search" id="food-search" type="search" placeholder="Search foods &amp; drinks" autocomplete="off" enterkeyhint="search" value="' + esc(s.q) + '">' +
         (s.similar ? '' : '<button class="plate-row" data-act="plate"><span class="plate-ico">🍽️</span><span class="plate-txt"><b>Build a plate</b><small>Home-cooked food or nasi campur, no numbers needed</small></span><span class="chev-r">›</span></button>') +
+        (s.similar || s.chip === 'mine' || !Object.keys(customFoods).length ? '' :
+          '<button class="mine-row" data-act="mine"><span class="mine-ico">📁</span><span class="row-text">My saved foods (' + Object.keys(customFoods).length + ')</span><span class="mine-sub">Edit / delete ›</span></button>') +
         '<div id="food-results">' + resultsHTML() + '</div>' +
         '<p class="note">Calories are estimates. Shop portions vary, so consistency matters more than perfection.</p>';
     }
@@ -1038,6 +1109,8 @@
       }
       body += flagsHTML(s.sd, s.sf) + mealSegHTML(s.meal);
       if (f.id) body += '<button class="btn-danger-plain" style="color:var(--accent)" data-act="fav-food">' + (fav ? '★ Remove from Favourites' : '☆ Add to Favourites') + '</button>';
+      if (f.id && customFoods[f.id]) body += '<button class="btn-danger-plain" style="color:var(--accent)" data-act="fedit-cur">✏️ Edit saved food</button>' +
+        '<button class="btn-danger-plain" data-act="fdel-cur">🗑 Delete saved food</button>';
       if (s.edit) body += '<button class="btn-danger-plain" data-act="delete">Delete entry</button>';
       return headHTML(s.edit ? { act: 'close', label: 'Cancel' } : { act: 'back', label: '‹ Back' }, s.edit ? 'Edit' : MEAL_LABEL[s.meal], { act: 'confirm', label: s.edit ? 'Save' : 'Add' }) + body;
     }
@@ -1067,18 +1140,18 @@
         '<div class="stepper"><button class="round-btn" data-act="pstep" data-k="' + key + '" data-u="' + unit + '" data-d="-0.5" aria-label="Less">−</button>' +
         '<button class="round-btn" data-act="pstep" data-k="' + key + '" data-u="' + unit + '" data-d="0.5" aria-label="More">+</button></div></div>';
     }
-    function opts(obj) { return Object.keys(obj).map(function (k) { return [k, obj[k][0]]; }); }
+    function plateOpts(obj) { return Object.keys(obj).map(function (k) { return [k, obj[k][0]]; }); }
     function plateHTML() {
       var c = plateCalc(), p = s.plate;
       return headHTML({ act: 'back', label: '‹ Back' }, 'Build a plate', { act: 'confirm', label: 'Add' }) +
         '<p class="note" style="margin-top:0">Use your hand: ✊ 1 fist ≈ 1 cup of rice · ✋ 1 palm ≈ 1 piece of chicken or fish · 👍 1 thumb ≈ 1 tbsp of oil, sambal or kuah.</p>' +
         '<div class="big-kcal" id="p-kcal">' + fmt(c.kcal) + ' <small>kcal</small></div><div class="big-sub" id="p-prot">' + round1(c.protein) + ' g protein · estimate</div>' +
-        '<h2 class="section-label">✊ Rice / carbs</h2>' + segHTML('pcarb', opts(PLATE.carb), p.carb, 'wrap') +
+        '<h2 class="section-label">✊ Rice / carbs</h2>' + segHTML('pcarb', plateOpts(PLATE.carb), p.carb, 'wrap') +
         '<div class="card list" style="margin-top:8px">' + stepRow('How much?', 'carbs', 'fist') + '</div>' +
-        '<h2 class="section-label">✋ Protein</h2>' + segHTML('pprot', opts(PLATE.prot), p.prot, 'wrap') +
-        '<div style="height:8px"></div>' + segHTML('pcook', opts(PLATE.cook), p.cook) +
+        '<h2 class="section-label">✋ Protein</h2>' + segHTML('pprot', plateOpts(PLATE.prot), p.prot, 'wrap') +
+        '<div style="height:8px"></div>' + segHTML('pcook', plateOpts(PLATE.cook), p.cook) +
         '<div class="card list" style="margin-top:8px">' + stepRow('How much?', 'prots', 'palm') + '</div>' +
-        '<h2 class="section-label">🥦 Veggies</h2>' + segHTML('pvcook', opts(PLATE.vcook), p.vcook) +
+        '<h2 class="section-label">🥦 Veggies</h2>' + segHTML('pvcook', plateOpts(PLATE.vcook), p.vcook) +
         '<div class="card list" style="margin-top:8px">' + stepRow('How much?', 'veg', 'fist') + '</div>' +
         '<h2 class="section-label">👍 Oil, sambal, kuah, santan</h2>' +
         '<div class="card list">' + stepRow('How much?', 'extra', 'thumb') + '</div>' +
@@ -1249,7 +1322,7 @@
     var ctl = {
       html: function () {
         return s.view === 'portion' ? portionHTML() : s.view === 'quick' ? quickHTML() : s.view === 'scan' ? scanHTML() :
-          s.view === 'product' ? productHTML() : s.view === 'plate' ? plateHTML() : listHTML();
+          s.view === 'product' ? productHTML() : s.view === 'plate' ? plateHTML() : s.view === 'fedit' ? fEditHTML() : listHTML();
       },
       mount: function () {
         if (s.view === 'scan') { s.status = ''; startScanner(lookup, setStatus); }
@@ -1300,9 +1373,27 @@
           toast(on2 ? 'Added to Favourites ⭐' : 'Removed from Favourites');
         } else if (act === 'scan') { s.view = 'scan'; renderSheet(); }
         else if (act === 'quick') { s.view = 'quick'; s.sd = false; s.sf = false; renderSheet(); }
-        else if (act === 'back') { stopScanner(); s.view = s.view === 'product' ? 'scan' : 'list'; s.status = ''; renderSheet(); }
+        else if (act === 'mine') { s.chip = 'mine'; s.q = ''; renderSheet(); }
+        else if (act === 'mine-close') { s.chip = null; renderSheet(); }
+        else if (act === 'fedit') openFEdit(s.results[+b.dataset.i].id, 'list');
+        else if (act === 'fedit-cur') openFEdit(s.food.id, 'portion');
+        else if (act === 'fdel') { deleteSavedFood(s.results[+b.dataset.i].id); renderSheet(); }
+        else if (act === 'fdel-cur') {
+          var did = s.view === 'fedit' ? s.fedit : s.food.id;
+          deleteSavedFood(did);
+          if (s.edit) { s.food.id = null; s.view = 'portion'; }   // keep editing the logged entry, without the saved food
+          else { s.chip = 'mine'; s.q = ''; s.view = 'list'; }
+          renderSheet();
+        }
+        else if (act === 'back') {
+          stopScanner();
+          s.view = s.view === 'product' ? 'scan' : s.view === 'fedit' ? s.fback : 'list';
+          if (s.view === 'portion' && s.food && s.food.id && customFoods[s.food.id]) { s.sd = s.food.sd; s.sf = s.food.sf; }
+          s.status = ''; renderSheet();
+        }
         else if (act === 'confirm') {
-          if (s.view === 'portion') confirmPortion(); else if (s.view === 'quick') confirmQuick();
+          if (s.view === 'fedit') confirmFEdit();
+          else if (s.view === 'portion') confirmPortion(); else if (s.view === 'quick') confirmQuick();
           else if (s.view === 'product') confirmProduct(); else if (s.view === 'plate') confirmPlate();
         }
         else if (act === 'delete') { deleteEntry(s.edit.id); closeSheet(); }
@@ -1779,6 +1870,7 @@
       if (!ev.target.closest('[data-act="use-protein"]')) return;
       settings.proteinGoal = Math.round(latestWeight() * 1.2); saveSettings(); renderSettings(); toast('Protein goal set ✓');
     });
+    $('open-myfoods').addEventListener('click', function () { openSheet(foodSheet({ chip: 'mine' })); });
     $('export-meals').addEventListener('click', exportMealsCSV);
     $('export-weight').addEventListener('click', exportWeightCSV);
 

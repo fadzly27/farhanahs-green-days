@@ -41,7 +41,7 @@ On by default, and can be switched off in Settings → Diet. When on:
 - **Home-screen shortcut**: long-press the app icon (Android) for **Add food**, or open
   `./?action=add-food`.
 - **Add food sheet**: Favourites, Recent (last 10 foods), barcode scan and Quick add, plus search
-  over 1,100 Malaysian foods and drinks (`foods.js`: hawker, mamak, nasi campur lauk, kuih, fruit, sushi, Korean, Thai, Mixue, ZUS, Tealive, packaged brands,
+  over 1,200 Malaysian foods and drinks (`foods.js`: hawker, mamak, nasi campur lauk, kuih, fruit, sushi, Korean, Thai, Mixue, ZUS, Tealive, packaged brands,
   drinks, fast-food chains, convenience-store items) and your own foods. The **+** button adds one
   standard serving in a single tap. The portion picker (½, ¾, 1, 1½, 2) has a hand-size guide.
 - **Build a plate**: estimate home-cooked food or nasi campur without typing numbers. Pick the
