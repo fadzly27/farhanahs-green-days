@@ -529,6 +529,27 @@ a.row { text-decoration: none; color: inherit; }
 .hands b { display: block; font-size: 24px; margin-bottom: 3px; }
 .hands strong { color: var(--text); font-weight: 600; }
 .segmented.portion button { font-size: 16px; padding: 8px 2px; }
+/* segmented control that wraps onto 2 rows (Build a plate) */
+.segmented.wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.segmented.wrap button::before { display: none; }
+.segmented.wrap button { font-size: 13px; padding: 8px 2px; }
+
+/* Build a plate */
+.plate-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 12px 14px; text-align: left;
+  background: color-mix(in srgb, var(--green) 12%, var(--card)); border-radius: var(--radius);
+}
+.plate-ico { font-size: 24px; flex: none; }
+.plate-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.plate-txt b { font-weight: 600; }
+.plate-txt small { font-size: 13px; color: var(--text-2); }
+.plate-step .step-val { color: var(--text-2); font-size: 15px; min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* barcode helpers */
+.similar-btn { color: var(--accent); margin-top: 10px; }
+.similar-banner { margin-top: 10px; padding: 10px 12px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+.est-note { padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--yellow) 18%, var(--card)); color: var(--text); }
+.remember-note { padding: 10px 12px; border-radius: 12px; background: var(--fill-2); }
 .flag-row .row-text small { display: block; color: var(--text-2); font-size: 13px; }
 .form-row input[type="text"], .form-row input[type="number"] {
   flex: 1; min-width: 0; font: inherit; color: var(--text); background: transparent; border: 0; text-align: right; padding: 4px 0;

@@ -41,12 +41,16 @@ On by default, and can be switched off in Settings → Diet. When on:
 - **Home-screen shortcut**: long-press the app icon (Android) for **Add food**, or open
   `./?action=add-food`.
 - **Add food sheet**: Favourites, Recent (last 10 foods), barcode scan and Quick add, plus search
-  over ~120 common Malaysian foods and drinks (`foods.js`) and your own foods. The **+** button adds
-  one standard serving in a single tap. The portion picker (½, ¾, 1, 1½, 2) has a hand-size guide.
+  over ~450 Malaysian foods and drinks (`foods.js`: hawker, mamak, nasi campur lauk, kuih, fruit,
+  drinks, fast-food chains, convenience-store items) and your own foods. The **+** button adds one
+  standard serving in a single tap. The portion picker (½, ¾, 1, 1½, 2) has a hand-size guide.
+- **Build a plate**: estimate home-cooked food or nasi campur without typing numbers. Pick the
+  carbs (fists), protein (palms, with grilled/curry/fried), veggies and oil/sambal (thumbs).
 - **Barcode scanning**: uses the camera (native `BarcodeDetector`, or ZXing loaded from a CDN only
   when needed) with "Type barcode instead" as a fallback. Products are looked up on
-  [Open Food Facts](https://world.openfoodfacts.org); unknown products can be entered from the label
-  and are saved, so the next scan works offline.
+  [Open Food Facts](https://world.openfoodfacts.org). If a product has no calories there, the app
+  fills in a typical value for its category (clearly marked as an estimate) or lets her
+  "Use a similar food". Whatever she confirms is saved, so the next scan is instant and works offline.
 - **Linked with the sugar tracker**: adding a sugary drink or sweet food switches on the matching
   toggle for that day.
 - **Calorie goal calculator**: Mifflin-St Jeor × activity level, with Maintain / Gentle loss (−300) /

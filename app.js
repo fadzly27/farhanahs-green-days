@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  var VERSION = '1.2.1';
+  var VERSION = '1.3.0';
   var DATA_KEY = 'fgd-data';
   var SETTINGS_KEY = 'fgd-settings';
   var MILESTONES = {
@@ -614,6 +614,22 @@
     moderate: { f: 1.55, label: 'Moderate', hint: 'Exercise 3–5 days a week.' },
     active: { f: 1.725, label: 'Active', hint: 'Hard exercise 6–7 days a week.' }
   };
+  // Build-a-plate: rough values per hand portion → [label, kcal, protein g]
+  //   ✊ 1 fist of cooked carbs ≈ 1 cup · ✋ 1 palm of protein ≈ 100 g cooked · 👍 1 thumb ≈ 1 tbsp
+  var PLATE = {
+    carb: { rice: ['Rice', 200, 4], brown: ['Brown rice', 185, 4], noodles: ['Noodles', 190, 6], bread: ['Bread / roti', 160, 6], potato: ['Potato', 130, 3] },
+    prot: { chicken: ['Chicken', 190, 28], fish: ['Fish', 140, 24], meat: ['Beef / mutton', 230, 25], egg: ['Eggs', 150, 12], tofu: ['Tofu / tempeh', 160, 14], seafood: ['Prawn / squid', 100, 20] },
+    cook: { plain: ['Grilled / steamed', 0], gravy: ['Curry / gravy', 80], fried: ['Fried', 110] },   // extra kcal per palm
+    vcook: { plain: ['Plain / soup', 0], stir: ['Stir-fried', 40], lemak: ['Lemak / curry', 80] }   // extra kcal per fist
+  };
+  // Turn a product name into a short search, e.g. "Mamee Monster Snack 25g x 8" → "mamee monster snack"
+  // Tries the first few words, then single words (last first, e.g. "wafer"), then the category word.
+  function similarQuery(name, fallback) {
+    var words = norm(name || '').split(' ').filter(function (w) { return w.length > 2 && !/\d/.test(w) && !/^(pack|packet|pcs)$/.test(w); });
+    var tries = [words.slice(0, 3).join(' '), words.slice(0, 2).join(' ')].concat(words.slice().reverse(), [fallback || '']);
+    for (var i = 0; i < tries.length; i++) if (tries[i] && searchFoods(tries[i]).length) return tries[i];
+    return fallback || words.slice(0, 2).join(' ');
+  }
   var PORTIONS = [0.5, 0.75, 1, 1.5, 2];
   var PORTION_LABEL = { 0.5: '½', 0.75: '¾', 1: '1', 1.5: '1½', 2: '2' };
 
@@ -919,7 +935,12 @@
   /* ---------- Add food sheet ---------- */
   function foodSheet(opts) {
     opts = opts || {};
-    var s = { view: 'list', meal: opts.meal || defaultMeal(), chip: null, q: '', results: [], food: null, portion: 1, mode: 'g', amount: 100, sd: false, sf: false, edit: null, product: null, status: '' };
+    var s = {
+      view: 'list', meal: opts.meal || defaultMeal(), chip: null, q: '', results: [], food: null, portion: 1, mode: 'g', amount: 100,
+      sd: false, sf: false, edit: null, product: null, status: '',
+      similar: null,   // { code, name } while picking a similar food for a scanned barcode
+      plate: { carb: 'rice', carbs: 1, prot: 'chicken', prots: 1, cook: 'plain', veg: 1, vcook: 'stir', extra: 1 }
+    };
     if (opts.editId) {
       var m = dayMeals(state.view).filter(function (x) { return x.id === opts.editId; })[0];
       if (m) {
@@ -928,7 +949,20 @@
       }
     }
 
+    // While "Use a similar food" is active, remember the chosen food for that barcode
+    function linkSimilar(f) {
+      if (!s.similar || f.per100) return f;
+      var id = 'bc-' + s.similar.code;
+      customFoods[id] = {
+        id: id, name: s.similar.name || f.name, serving: f.serving, kcal: round1(f.kcal), protein: round1(f.protein),
+        isSugaryDrink: !!f.sd, isSweetFood: !!f.sf, isFried: !!f.fr, veg: f.veg || 0, barcode: s.similar.code, per100: false
+      };
+      saveFoods();
+      s.similar = null;
+      return getFood(id);
+    }
     function pickFood(f) {
+      f = linkSimilar(f);
       s.food = f; s.sd = f.sd; s.sf = f.sf; s.portion = 1;
       var d = defaultAmount(f); s.mode = d.mode; s.amount = d.amount;
       s.view = 'portion'; renderSheet();
@@ -956,7 +990,7 @@
       groups.forEach(function (g) {
         if (g[0]) html += '<h2 class="section-label">' + g[0] + '</h2>';
         if (!g[1].length) {
-          var msg = s.q ? 'No match. Try another word, or use ✏️ Quick add.' : s.chip === 'favs' ? 'Tap ☆ on any food to keep it here.' : 'Foods you log will show up here.';
+          var msg = s.q ? 'No match. Try another word, or use 🍽️ Build a plate / ✏️ Quick add.' : s.chip === 'favs' ? 'Tap ☆ on any food to keep it here.' : 'Foods you log will show up here.';
           html += '<div class="card"><div class="empty">' + msg + '</div></div>';
           return;
         }
@@ -978,7 +1012,9 @@
         '<button class="chip-btn' + (s.chip === 'recent' ? ' on' : '') + '" data-act="chip" data-chip="recent"><span class="ci">🕘</span>Recent</button>' +
         '<button class="chip-btn" data-act="scan"><span class="ci">📷</span>Scan barcode</button>' +
         '<button class="chip-btn" data-act="quick"><span class="ci">✏️</span>Quick add</button></div>' +
+        (s.similar ? '<div class="similar-banner">🔍 Pick a food similar to <b>' + esc(s.similar.name || 'your product') + '</b>. It’ll be remembered for this barcode. <button class="small-link" data-act="similar-cancel">Cancel</button></div>' : '') +
         '<input class="search" id="food-search" type="search" placeholder="Search foods &amp; drinks" autocomplete="off" enterkeyhint="search" value="' + esc(s.q) + '">' +
+        (s.similar ? '' : '<button class="plate-row" data-act="plate"><span class="plate-ico">🍽️</span><span class="plate-txt"><b>Build a plate</b><small>Home-cooked food or nasi campur, no numbers needed</small></span><span class="chev-r">›</span></button>') +
         '<div id="food-results">' + resultsHTML() + '</div>' +
         '<p class="note">Calories are estimates. Shop portions vary, so consistency matters more than perfection.</p>';
     }
@@ -1004,6 +1040,72 @@
       if (f.id) body += '<button class="btn-danger-plain" style="color:var(--accent)" data-act="fav-food">' + (fav ? '★ Remove from Favourites' : '☆ Add to Favourites') + '</button>';
       if (s.edit) body += '<button class="btn-danger-plain" data-act="delete">Delete entry</button>';
       return headHTML(s.edit ? { act: 'close', label: 'Cancel' } : { act: 'back', label: '‹ Back' }, s.edit ? 'Edit' : MEAL_LABEL[s.meal], { act: 'confirm', label: s.edit ? 'Save' : 'Add' }) + body;
+    }
+
+    // ----- build-a-plate view (hand-size estimate, no numbers to type) -----
+    function plateCalc() {
+      var p = s.plate, c = PLATE.carb[p.carb], r = PLATE.prot[p.prot], ck = PLATE.cook[p.cook], v = PLATE.vcook[p.vcook];
+      return {
+        kcal: c[1] * p.carbs + (r[1] + ck[1]) * p.prots + (30 + v[1]) * p.veg + 60 * p.extra,
+        protein: c[2] * p.carbs + r[2] * p.prots + 2 * p.veg + 0.3 * p.extra
+      };
+    }
+    function plateName() {
+      var p = s.plate, parts = [];
+      if (p.carbs) parts.push(PLATE.carb[p.carb][0]);
+      if (p.prots) parts.push(PLATE.prot[p.prot][0].toLowerCase() + (p.cook !== 'plain' ? ' (' + PLATE.cook[p.cook][0].toLowerCase() + ')' : ''));
+      if (p.veg) parts.push('veg');
+      return parts.length ? parts.join(' + ') : 'Home-cooked plate';
+    }
+    function countText(n, unit) {
+      if (!n) return 'None';
+      var t = String(n).replace('.5', '½'); if (t === '0½') t = '½';
+      return t + ' ' + unit + (n > 1 ? 's' : '');
+    }
+    function stepRow(label, key, unit) {
+      return '<div class="row plate-step"><span class="row-text">' + label + '</span><span class="step-val" id="pv-' + key + '">' + countText(s.plate[key], unit) + '</span>' +
+        '<div class="stepper"><button class="round-btn" data-act="pstep" data-k="' + key + '" data-u="' + unit + '" data-d="-0.5" aria-label="Less">−</button>' +
+        '<button class="round-btn" data-act="pstep" data-k="' + key + '" data-u="' + unit + '" data-d="0.5" aria-label="More">+</button></div></div>';
+    }
+    function opts(obj) { return Object.keys(obj).map(function (k) { return [k, obj[k][0]]; }); }
+    function plateHTML() {
+      var c = plateCalc(), p = s.plate;
+      return headHTML({ act: 'back', label: '‹ Back' }, 'Build a plate', { act: 'confirm', label: 'Add' }) +
+        '<p class="note" style="margin-top:0">Use your hand: ✊ 1 fist ≈ 1 cup of rice · ✋ 1 palm ≈ 1 piece of chicken or fish · 👍 1 thumb ≈ 1 tbsp of oil, sambal or kuah.</p>' +
+        '<div class="big-kcal" id="p-kcal">' + fmt(c.kcal) + ' <small>kcal</small></div><div class="big-sub" id="p-prot">' + round1(c.protein) + ' g protein · estimate</div>' +
+        '<h2 class="section-label">✊ Rice / carbs</h2>' + segHTML('pcarb', opts(PLATE.carb), p.carb, 'wrap') +
+        '<div class="card list" style="margin-top:8px">' + stepRow('How much?', 'carbs', 'fist') + '</div>' +
+        '<h2 class="section-label">✋ Protein</h2>' + segHTML('pprot', opts(PLATE.prot), p.prot, 'wrap') +
+        '<div style="height:8px"></div>' + segHTML('pcook', opts(PLATE.cook), p.cook) +
+        '<div class="card list" style="margin-top:8px">' + stepRow('How much?', 'prots', 'palm') + '</div>' +
+        '<h2 class="section-label">🥦 Veggies</h2>' + segHTML('pvcook', opts(PLATE.vcook), p.vcook) +
+        '<div class="card list" style="margin-top:8px">' + stepRow('How much?', 'veg', 'fist') + '</div>' +
+        '<h2 class="section-label">👍 Oil, sambal, kuah, santan</h2>' +
+        '<div class="card list">' + stepRow('How much?', 'extra', 'thumb') + '</div>' +
+        '<h2 class="section-label">Name</h2><div class="card list">' +
+        formRow('Name', 'pl-name', '', '', 'type="text" maxlength="80" placeholder="' + esc(plateName()) + '"') +
+        '<label class="row check-row"><span class="row-text">Save as my food</span><input type="checkbox" id="pl-save"></label></div>' +
+        mealSegHTML(s.meal);
+    }
+    function updatePlate() {
+      var c = plateCalc();
+      $('p-kcal').innerHTML = fmt(c.kcal) + ' <small>kcal</small>';
+      $('p-prot').textContent = round1(c.protein) + ' g protein · estimate';
+      var n = $('pl-name'); if (n) n.placeholder = plateName();
+    }
+    function confirmPlate() {
+      var c = plateCalc(), p = s.plate;
+      if (c.kcal <= 0) { toast('Add something to the plate first'); return; }
+      var name = str($('pl-name').value, 80) || plateName();
+      var f = { id: null, name: name, serving: '1 plate', kcal: Math.round(c.kcal), protein: round1(c.protein), sd: false, sf: false,
+        fr: p.cook === 'fried' && p.prots > 0, veg: p.veg, source: 'custom', barcode: null, per100: false, unit: 'g', perServing: null };
+      if ($('pl-save').checked) {
+        f.id = 'c-' + newId();
+        customFoods[f.id] = { id: f.id, name: name, serving: '1 plate', kcal: f.kcal, protein: f.protein, isSugaryDrink: false, isSweetFood: false, isFried: f.fr, veg: f.veg };
+        saveFoods();
+      }
+      addEntries([makeEntry(f, calcFood(f, 1), s.meal, { sd: false, sf: false })], 'Added to ' + MEAL_LABEL[s.meal].toLowerCase() + ' ✓');
+      closeSheet();
     }
 
     // ----- quick add view -----
@@ -1035,6 +1137,7 @@
       if (!/^\d{8,14}$/.test(code)) { setStatus('Barcodes have 8 to 14 digits.'); return; }
       stopScanner();
       var saved = customFoods['bc-' + code];
+      if (saved && !saved.per100) { s.from = 'scan'; pickFood(getFood('bc-' + code)); return; }   // linked to a similar food earlier
       if (saved) { showProduct(productFromCustom(saved, 'saved')); return; }
       var blank = { barcode: code, name: '', kcal100: '', protein100: '', unit: 'g', serving: null, sd: false, sf: false };
       if (!navigator.onLine) { showProduct(Object.assign(blank, { status: 'offline' })); return; }
@@ -1048,7 +1151,8 @@
           if (!sheet.ctl || sheet.ctl !== ctl) return;
           var p = j && j.status === 1 && j.product ? parseOFF(code, j.product) : null;
           if (p) {
-            customFoods['bc-' + code] = productToCustom(p); saveFoods();  // works offline next time
+            // keep it for next time (works offline) — but only when Open Food Facts had real calories
+            if (p.status === 'found' && p.kcal100 !== '') { customFoods['bc-' + code] = productToCustom(p); saveFoods(); }
             showProduct(p);
           } else showProduct(Object.assign(blank, { status: 'notfound' }));
         })
@@ -1069,15 +1173,20 @@
     }
     function productHTML() {
       var p = s.product, f = productFood(), c = calcFood(f, 1, s.mode, s.amount);
+      var who = p.name ? '“' + esc(p.name) + '”' : 'this product';
       var msg = {
         found: '✓ Found on Open Food Facts. Check the numbers against the label if you can.',
         saved: '✓ Saved on this phone from an earlier scan.',
-        notfound: 'Not found on Open Food Facts. Enter it from the nutrition label and it’ll be saved for next time.',
-        offline: 'You’re offline. Enter it from the nutrition label and it’ll be saved for next time.',
-        error: 'Couldn’t reach Open Food Facts. Enter it from the nutrition label and it’ll be saved for next time.'
+        estimated: '≈ Found ' + who + ', but Open Food Facts has no calories for it. These numbers are an <b>estimate based on typical ' + esc(p.estLabel || 'products like it') + '</b>. Check the label if you can, or use a similar food.',
+        noinfo: 'Found ' + who + ', but Open Food Facts has no calories for it. Enter them from the nutrition label, or use a similar food.',
+        notfound: 'Not found on Open Food Facts. Enter it from the nutrition label, or use a similar food.',
+        offline: 'You’re offline. Enter it from the nutrition label, or use a similar food.',
+        error: 'Couldn’t reach Open Food Facts. Enter it from the nutrition label, or use a similar food.'
       }[p.status] || '';
+      var manual = p.status !== 'found' && p.status !== 'saved';
       return headHTML({ act: 'back', label: '‹ Back' }, 'Product', { act: 'confirm', label: 'Add' }) +
-        '<p class="note" style="margin-top:0">' + msg + '</p>' +
+        '<p class="note' + (p.status === 'estimated' ? ' est-note' : '') + '" style="margin-top:0">' + msg + '</p>' +
+        (manual ? '<button class="btn-danger-plain similar-btn" data-act="similar">🔍 Use a similar food instead</button>' : '') +
         '<div class="card list" style="margin-top:10px">' +
         formRow('Barcode', 'pr-code', p.barcode, '', 'type="text" readonly') +
         formRow('Name', 'pr-name', p.name, '', 'type="text" maxlength="100" placeholder="Product name"') +
@@ -1092,7 +1201,8 @@
         '<div class="card list">' + formRow(s.mode === 'serv' ? 'Servings' : 'Amount', 'p-amount', s.amount, s.mode === 'serv' ? '' : p.unit, 'type="number" inputmode="decimal" min="0" step="' + (s.mode === 'serv' ? '0.5' : '10') + '"') + '</div>' +
         flagsHTML(s.sd, s.sf) +
         '<p class="note">Auto-marked when sugar is high (15 g+ per 100 g for food, 5 g+ per 100 ml for drinks). Change it if it’s wrong.</p>' +
-        mealSegHTML(s.meal);
+        mealSegHTML(s.meal) +
+        (manual ? '<p class="note remember-note">💾 You only need to do this <b>once</b>. Next time you scan this barcode, the calories come up straight away, even offline.</p>' : '');
     }
     function readProductFields() {
       var p = s.product;
@@ -1122,19 +1232,24 @@
     function confirmProduct() {
       readProductFields();
       var p = s.product, k = num(p.kcal100);
+      // per-serving-only products (no grams known) can still be added by servings
+      var servingOnly = s.mode === 'serv' && p.serving && !p.serving.qty && p.serving.kcal != null;
       if (!str(p.name, 100)) { toast('Add a name for this product'); $('pr-name').focus(); return; }
-      if (k == null || k < 0 || k > 1000) { toast('Enter kcal per 100 ' + p.unit + ' from the label'); $('pr-kcal').focus(); return; }
+      if (!servingOnly && (k == null || k < 0 || k > 1000)) { toast('Enter kcal per 100 ' + p.unit + ' from the label'); $('pr-kcal').focus(); return; }
       if (!(s.amount > 0)) { toast('Enter how much you had'); return; }
       p.sd = s.sd; p.sf = s.sf;
+      var wasManual = p.status !== 'found' && p.status !== 'saved';
       customFoods['bc-' + p.barcode] = productToCustom(p); saveFoods();
       var f = productFood();
-      addEntries([makeEntry(f, calcFood(f, 1, s.mode, s.amount), s.meal, { sd: s.sd, sf: s.sf })], 'Added to ' + MEAL_LABEL[s.meal].toLowerCase() + ' ✓');
+      addEntries([makeEntry(f, calcFood(f, 1, s.mode, s.amount), s.meal, { sd: s.sd, sf: s.sf })],
+        wasManual ? 'Added & saved ✓ Next scan of this barcode is instant' : 'Added to ' + MEAL_LABEL[s.meal].toLowerCase() + ' ✓');
       closeSheet();
     }
 
     var ctl = {
       html: function () {
-        return s.view === 'portion' ? portionHTML() : s.view === 'quick' ? quickHTML() : s.view === 'scan' ? scanHTML() : s.view === 'product' ? productHTML() : listHTML();
+        return s.view === 'portion' ? portionHTML() : s.view === 'quick' ? quickHTML() : s.view === 'scan' ? scanHTML() :
+          s.view === 'product' ? productHTML() : s.view === 'plate' ? plateHTML() : listHTML();
       },
       mount: function () {
         if (s.view === 'scan') { s.status = ''; startScanner(lookup, setStatus); }
@@ -1150,10 +1265,26 @@
           else if (which === 'mode') {
             readProductFields(); s.mode = v; s.amount = v === 'serv' ? 1 : 100; renderSheet();
           } else if (which === 'unit') { readProductFields(); s.product.unit = v; renderSheet(); }
-        } else if (act === 'chip') { s.chip = s.chip === b.dataset.chip ? null : b.dataset.chip; s.q = ''; renderSheet(); }
+          else if (which === 'pcarb') { s.plate.carb = v; updatePlate(); }
+          else if (which === 'pprot') { s.plate.prot = v; updatePlate(); }
+          else if (which === 'pcook') { s.plate.cook = v; updatePlate(); }
+          else if (which === 'pvcook') { s.plate.vcook = v; updatePlate(); }
+        } else if (act === 'pstep') {
+          var key = b.dataset.k;
+          s.plate[key] = clamp(s.plate[key] + parseFloat(b.dataset.d), 0, 4);
+          $('pv-' + key).textContent = countText(s.plate[key], b.dataset.u);
+          updatePlate();
+        } else if (act === 'plate') { s.view = 'plate'; renderSheet(); }
+        else if (act === 'similar') {
+          readProductFields();
+          var pp = s.product;
+          s.similar = { code: pp.barcode, name: str(pp.name, 100) };
+          s.q = similarQuery(pp.name, pp.estQuery); s.chip = null; s.view = 'list'; renderSheet();
+        } else if (act === 'similar-cancel') { s.similar = null; s.q = ''; renderSheet(); }
+        else if (act === 'chip') { s.chip = s.chip === b.dataset.chip ? null : b.dataset.chip; s.q = ''; renderSheet(); }
         else if (act === 'pick') pickFood(s.results[+b.dataset.i]);
         else if (act === 'qadd') {
-          f = s.results[+b.dataset.i];
+          f = linkSimilar(s.results[+b.dataset.i]);
           var d = defaultAmount(f);
           addEntries([makeEntry(f, calcFood(f, 1, d.mode, d.amount), s.meal, { sd: f.sd, sf: f.sf })], 'Added ' + f.name + ' ✓');
           b.textContent = '✓'; b.disabled = true;
@@ -1170,7 +1301,10 @@
         } else if (act === 'scan') { s.view = 'scan'; renderSheet(); }
         else if (act === 'quick') { s.view = 'quick'; s.sd = false; s.sf = false; renderSheet(); }
         else if (act === 'back') { stopScanner(); s.view = s.view === 'product' ? 'scan' : 'list'; s.status = ''; renderSheet(); }
-        else if (act === 'confirm') { if (s.view === 'portion') confirmPortion(); else if (s.view === 'quick') confirmQuick(); else if (s.view === 'product') confirmProduct(); }
+        else if (act === 'confirm') {
+          if (s.view === 'portion') confirmPortion(); else if (s.view === 'quick') confirmQuick();
+          else if (s.view === 'product') confirmProduct(); else if (s.view === 'plate') confirmPlate();
+        }
         else if (act === 'delete') { deleteEntry(s.edit.id); closeSheet(); }
       },
       input: function (ev) {
@@ -1190,20 +1324,92 @@
   function parseOFF(code, p) {
     var n = p.nutriments || {};
     var k = num(n['energy-kcal_100g']);
-    if (k == null && num(n.energy_100g) != null) k = num(n.energy_100g) / 4.184;   // kJ → kcal
+    var kj = num(n['energy-kj_100g']); if (kj == null) kj = num(n.energy_100g);
+    if (k == null && kj != null) k = kj / 4.184;   // kJ → kcal
     var pr = num(n.proteins_100g), sugar = num(n.sugars_100g);
     var cats = (p.categories_tags || []).join(' ');
     var drink = /beverages|drinks/.test(cats) || p.product_quantity_unit === 'ml' || /\d\s*(ml|cl|l)\b/i.test(p.quantity || '');
     var unit = drink ? 'ml' : 'g';
-    var serving = null, sq = num(p.serving_quantity), ks = num(n['energy-kcal_serving']);
+    var sq = num(p.serving_quantity), ks = num(n['energy-kcal_serving']);
+    if (ks == null && num(n.energy_serving) != null) ks = num(n.energy_serving) / 4.184;
+    // only per-serving numbers? turn them into per-100 when we know the serving size
+    if (k == null && ks != null && sq > 0) k = ks * 100 / sq;
+    if (pr == null && num(n.proteins_serving) != null && sq > 0) pr = num(n.proteins_serving) * 100 / sq;
+    var serving = null;
     if (sq > 0 && k != null) serving = { label: p.serving_size || (sq + ' ' + unit), qty: sq, kcal: k * sq / 100, protein: (pr || 0) * sq / 100 };
     else if (ks != null) serving = { label: p.serving_size || '1 serving', qty: null, kcal: ks, protein: num(n.proteins_serving) || 0 };
     var name = str(p.product_name || p.product_name_en, 80) || str((p.brands || '').split(',')[0], 60);
-    if (!name && k == null) return null;
-    return {
+    if (!name && k == null && !serving) return null;
+    var out = {
       barcode: code, name: name, kcal100: k == null ? '' : round1(k), protein100: pr == null ? '' : round1(pr), unit: unit, serving: serving,
       sd: drink && sugar != null && sugar >= 5, sf: !drink && sugar != null && sugar >= 15, status: 'found'
     };
+    if (k == null && !serving) {
+      // Open Food Facts knows the product but not its calories: estimate from its category
+      var est = estimateCategory(cats, name, drink);
+      if (est) {
+        out.status = 'estimated'; out.estLabel = est.label; out.estQuery = est.q;
+        out.kcal100 = est.kcal; if (pr == null) out.protein100 = est.protein;
+        out.unit = est.drink ? 'ml' : 'g';
+        if (sugar == null) { out.sd = !!est.sd; out.sf = !!est.sf; }
+      } else out.status = 'noinfo';
+    }
+    return out;
+  }
+
+  // Typical values per 100 g / 100 ml for common packaged-food categories (rough averages),
+  // used only when a product has no nutrition data. Matched against Open Food Facts
+  // category tags and the product name (English + Malay words).
+  var DRINK_ESTIMATES = [
+    [/zero|diet|sugar-free|no-sugar|tanpa-gula|tanpa gula/, 'zero-sugar drink', 1, 0, 0, 0, 'zero sugar'],
+    [/energy-drink|energy drink/, 'energy drink', 45, 0, 1, 0, 'energy drink'],
+    [/isotonic|sports-drink|100plus|100 plus/, 'isotonic drink', 25, 0, 1, 0, 'isotonic'],
+    [/soft-drink|soda|cola|carbonated|fizzy|bergas/, 'soft drink', 42, 0, 1, 0, 'soft drink'],
+    [/juice|nectar|fruit-based|fruit-drink|\bjus\b/, 'fruit juice / drink', 45, 0.3, 1, 0, 'juice'],
+    [/iced-tea|tea-based|\btea\b|\bteh\b/, 'sweetened tea drink', 35, 0, 1, 0, 'tea'],
+    [/coffee|kopi|nescafe/, 'coffee drink', 60, 1.5, 1, 0, 'coffee'],
+    [/chocolate-milk|flavoured-milk|flavored-milk|milk-drink|malt|milo|coklat|chocolate/, 'flavoured milk drink', 70, 3, 1, 0, 'chocolate milk'],
+    [/soy|soya|plant-based-milk|oat-milk|almond-milk/, 'soy / plant milk', 50, 3, 0, 0, 'soy'],
+    [/yogurt-drink|yoghurt-drink|fermented-milk|cultured|yakult|vitagen/, 'cultured milk drink', 70, 1.5, 1, 0, 'cultured milk'],
+    [/\bmilk|susu/, 'milk', 64, 3.3, 0, 0, 'milk'],
+    [/water|air mineral|mineral/, 'water', 0, 0, 0, 0, 'water'],
+    [/.*/, 'sweetened drink', 40, 0.5, 1, 0, 'drink']
+  ];
+  var FOOD_ESTIMATES = [
+    [/instant-noodle|instant noodle|mee segera|maggi|cup-noodle|ramen/, 'instant noodles (dry)', 450, 9, 0, 0, 'instant noodles'],
+    [/pasta|noodle|\bmee\b|bihun|mihun|spaghetti/, 'dry noodles / pasta', 350, 11, 0, 0, 'noodles'],
+    [/\brice|beras/, 'rice (uncooked)', 360, 7, 0, 0, 'rice'],
+    [/peanut-butter|peanut butter/, 'peanut butter', 590, 25, 0, 0, 'peanut butter'],
+    [/wafer|biscuit|cookie|biskut/, 'biscuits', 480, 6, 0, 1, 'biscuits'],
+    [/cracker/, 'crackers', 430, 9, 0, 0, 'crackers'],
+    [/chip|crisp|kerepek|keropok|salty-snack|extruded/, 'chips / crisps', 520, 6, 0, 0, 'chips'],
+    [/chocolate|coklat|cocoa/, 'chocolate', 540, 6, 0, 1, 'chocolate'],
+    [/cand(y|ies)|confection|sweets|gula-gula|gumm|lollipop|marshmallow/, 'sweets / candy', 390, 1, 0, 1, 'sweets'],
+    [/cake|pastr|muffin|\bkek\b|\bbun|viennoiserie|donut|doughnut|croissant/, 'cake / pastry', 380, 6, 0, 1, 'cake'],
+    [/bread|\broti\b|loaf/, 'bread', 265, 9, 0, 0, 'bread'],
+    [/ice-cream|ice cream|frozen-dessert|aiskrim/, 'ice cream', 210, 3.5, 0, 1, 'ice cream'],
+    [/cereal-bar|snack-bar|granola-bar|protein-bar/, 'cereal bar', 420, 6, 0, 1, 'cereal bar'],
+    [/breakfast-cereal|cereal|granola|muesli|cornflake|oat/, 'breakfast cereal', 380, 8, 0, 0, 'cereal'],
+    [/nut|peanut|kacang|almond|cashew/, 'nuts', 590, 20, 0, 0, 'nuts'],
+    [/yogurt|yoghurt/, 'yogurt', 80, 4, 0, 0, 'yogurt'],
+    [/cheese|keju/, 'cheese', 330, 22, 0, 0, 'cheese'],
+    [/sausage|nugget|meat|burger|sosej|ham\b/, 'processed meat', 250, 13, 0, 0, 'sausage'],
+    [/sardine|tuna|canned-fish|fish|sardin|ikan/, 'canned fish', 180, 20, 0, 0, 'canned fish'],
+    [/jam|spread|kaya|honey|madu|syrup/, 'sweet spread', 300, 1, 0, 1, 'jam'],
+    [/sauce|condiment|ketchup|\bsos\b|mayonnaise|dressing/, 'sauce', 110, 1, 0, 0, 'sauce'],
+    [/sweet-snack|dessert/, 'sweet snack', 450, 5, 0, 1, 'snack'],
+    [/snack/, 'snack', 480, 6, 0, 0, 'snack']
+  ];
+  function estimateCategory(cats, name, drink) {
+    var hay = (cats + ' ' + String(name || '')).toLowerCase();
+    var list = drink ? DRINK_ESTIMATES : FOOD_ESTIMATES;
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i];
+      if (r[0].test(hay)) {
+        return { label: r[1], kcal: r[2], protein: r[3], sd: !!r[4] && drink, sf: !!r[5], drink: drink, q: r[6] };
+      }
+    }
+    return null;
   }
   function productToCustom(p) {
     var k = num(p.kcal100) || 0, pr = num(p.protein100) || 0, sv = null;
