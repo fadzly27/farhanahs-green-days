@@ -605,3 +605,15 @@ a.row { text-decoration: none; color: inherit; }
 .sheet .stats { margin-top: 10px; }
 .toast { z-index: 60; }
 .banner .small-link { margin-left: 6px; }
+
+/* my saved foods: edit / delete */
+.mine-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 12px 14px;
+  background: var(--card); border-radius: 12px; text-align: left; color: var(--text); font-size: 15px;
+}
+.mine-ico { font-size: 20px; }
+.mine-sub { color: var(--accent); font-size: 14px; white-space: nowrap; }
+.mine-head { display: flex; justify-content: space-between; align-items: baseline; }
+.icon-btn { flex: none; font-size: 18px; padding: 10px 10px; line-height: 1; border-radius: 10px; }
+.icon-btn:active { background: var(--sep); }
+.icon-btn:last-child { padding-right: 14px; }
